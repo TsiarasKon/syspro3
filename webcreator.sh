@@ -31,18 +31,29 @@ if test "$(ls -A "$1")"; then
 fi
 
 # Create web sites names:
-sitelist=()
+p9000=$(($4 + 9000))
+sitelist=""
 for i in $(seq 0 "$w1"); do
 	di="$1"/site"$i";
 	echo "$di";
-	randnums=($(shuf -i 100-9999 -n "$4"))
-	insitelist=""
+	randnums=($(shuf -i 1000-"$p9000" -n "$4"))
 	for j in $(seq 0 $p1); do
 		pg="$1"/site"$i"/page"$j"_"${randnums[$j]}".html;
 		echo " $pg";
-		insitelist+="$pg ";
+		sitelist+="$pg
+";
 	done
-	sitelist+=("$insitelist");
 done
+sitelist=$(head -n -1 <<< "$sitelist")		# remove empty last line
 
-echo ${sitelist[@]}
+f=$w1
+q=$p1
+
+for i in $(seq 0 "$w1"); do
+	out_links=$(echo "$sitelist" | grep -v "site$i" | shuf -n "$f")
+	for j in $(seq 0 $p1); do
+		in_links=$(echo "$sitelist" | grep "site$i" | grep -v "page$j" | shuf -n "$q")
+		#page_links=$("$out_links$in_links")
+		#echo "$page_links"
+	done
+done
