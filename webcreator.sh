@@ -35,11 +35,9 @@ p9000=$(($4 + 9000))
 sitelist=""
 for i in $(seq 0 "$w1"); do
 	di="$1"/site"$i";
-	echo "$di";
 	randnums=($(shuf -i 1000-"$p9000" -n "$4"))
 	for j in $(seq 0 $p1); do
 		pg="$1"/site"$i"/page"$j"_"${randnums[$j]}".html;
-		echo " $pg";
 		sitelist+="$pg
 ";
 	done
@@ -49,11 +47,35 @@ sitelist=$(head -n -1 <<< "$sitelist")		# remove empty last line
 f=$w1
 q=$p1
 
+linked=""
+
 for i in $(seq 0 "$w1"); do
 	out_links=$(echo "$sitelist" | grep -v "site$i" | shuf -n "$f")
 	for j in $(seq 0 $p1); do
 		in_links=$(echo "$sitelist" | grep "site$i" | grep -v "page$j" | shuf -n "$q")
-		#page_links=$("$out_links$in_links")
-		#echo "$page_links"
+		page_links=$(head -n -1 <<< "$in_links
+$out_links
+" | shuf)
+		linked+="$page_links
+"
 	done
 done
+linked=$(head -n -1 <<< "$linked")		# remove empty last line
+
+
+
+
+
+
+sites_num=$(wc -l <<< "$sitelist")
+linked_num=$(sort <<< "$linked" | uniq | wc -l)
+if [ $sites_num -eq $linked_num ]; then
+	echo "All pages have at least one incoming link"
+else
+	unlinked_pages_num=$(($sites_num - $linked_num))
+	echo "$unlinked_pages_num page(s) have no incoming link"	
+fi
+
+
+
+
