@@ -45,8 +45,8 @@ for i in $(seq 0 "$w1"); do
 done
 sitelist=$(head -n -1 <<< "$sitelist")		# remove empty last line
 
-f=$w1
-q=$p1
+f=$(($w1 / 2 + 1))
+q=$(($p1 / 2 + 1))
 
 html_headers="<!DOCTYPE html>
 <html>
@@ -65,16 +65,26 @@ for i in $(seq 0 "$w1"); do
 		page_links=$(head -n -1 <<< "$in_links
 $out_links
 " | shuf)
-#		echo "$page_links
 		linked+="$page_links
 "
+		k2=$(($lines_num - 1))
+		k=$(shuf -i 2-$k2 -n 1)
+		m=$(shuf -i 1001-1999 -n 1)
 		site_text="$html_headers"
-		lcounter=0
-		while read link; do
-			site_text+="	<a href=\"$link\">link${lcounter}_text</a>
+		link_index=1
+		inc=$(($m / ($f + $q)))
+		sd1=$k
+		sd2=$(($sd1 + $inc))
+		steps=$(($f + $q))
+		for st in $(seq 1 "$steps"); do
+			site_text+=$(sed -n "$sd1","$sd2"p "$2")
+			sd1=$(($sd2 + 1))
+			((sd2 += $inc))
+			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")
+			site_text+="<a href=\"$line_link\">link${link_index}_text</a>
 "
-			lcounter=$((lcounter += 1))
-		done <<< "$page_links"
+			((link_index ++))
+		done
 		site_text+="$html_footers"
 		echo "$site_text" > "$site_name"
 	done
@@ -83,7 +93,7 @@ linked=$(head -n -1 <<< "$linked")		# remove empty last line
 
 
 sites_num=$(wc -l <<< "$sitelist")
-linked_num=$(sort <<< "$linked" | uniq | wc -l)
+linked_num=$(sort -u <<< "$linked" | wc -l)
 if [ $sites_num -eq $linked_num ]; then
 	echo "All pages have at least one incoming link"
 else
