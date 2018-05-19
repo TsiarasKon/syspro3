@@ -1,6 +1,6 @@
+#define _GNU_SOURCE         // needed for asprintf()
 #include <stdio.h>
 #include <time.h>
-#include <sys/time.h>
 #include "util.h"
 
 const char *cmds[7] = {
@@ -13,37 +13,12 @@ const char *cmds[7] = {
         "/exit"
 };
 
-int getArrayMax(const int *arr, int dim) {
-    if (dim == 0) {
-        return -1;
-    }
-    int curr_max = arr[0];
-    for (int i = 1; i < dim; i++) {
-        if (arr[i] > curr_max) {
-            curr_max = arr[i];
-        }
-    }
-    return curr_max;
-}
-
-int getNextZero(const int *arr, int dim) {
-    for (int i = 0; i < dim; i++) {
-        if (arr[i] == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-
-char* getCurrentTime(void) {
-    time_t rawtime;
+char* getTimeRunning(time_t start_time) {
+    time_t curr_time = time(NULL) - start_time;
+    printf("%ld %ld %ld\n", time(NULL), start_time, curr_time);
     struct tm *timeinfo;
-
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-
-    static char output[20];
-    sprintf(output, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d", timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday, timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-    return output;
+    timeinfo = gmtime(&curr_time);
+    char *time_str;
+    asprintf(&time_str, "%d:%d.%d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+    return time_str;
 }

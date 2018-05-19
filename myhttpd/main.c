@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 #include "util.h"
 
 int main(int argc, char *argv[]) {
+    time_t start_time = time(NULL);
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
         return EC_ARG;
@@ -45,6 +47,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
         return EC_ARG;
     }
-    printf("%d %d %d %s\n", serving_port, command_port, thread_num, root_dir);
-    return 0;
+    sleep(1);
+    char *time_running = getTimeRunning(start_time);
+    printf("%s\n", time_running);
+    free(time_running);
+    return EC_OK;
 }

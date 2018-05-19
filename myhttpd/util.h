@@ -14,8 +14,6 @@ enum ErrorCodes {
 
 const char *cmds[7];
 
-int getArrayMax(const int *arr, int dim);
-int getNextZero(const int *arr, int dim);
-char* getCurrentTime(void);
+char* getTimeRunning(time_t start_time);
 
 #endif
