@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/main.c
+stdio.h
+-
+stdlib.h
+-
+unistd.h
+-
+string.h
+-
+util.h
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
+
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c
+stdio.h
+-
+time.h
+-
+sys/time.h
+-
+util.h
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
+
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
+
