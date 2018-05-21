@@ -17,6 +17,10 @@ string.h
 -
 time.h
 -
+netinet/in.h
+-
+pthread.h
+-
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
 
@@ -24,8 +28,6 @@ util.h
 stdio.h
 -
 time.h
--
-sys/time.h
 -
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h

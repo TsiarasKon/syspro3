@@ -3,17 +3,7 @@
 #include <time.h>
 #include "util.h"
 
-const char *cmds[7] = {
-        "/search",
-        "/maxcount",
-        "/mincount",
-        "/wc",
-        "/pids",
-        "/help",
-        "/exit"
-};
-
-char* getTimeRunning(time_t start_time) {
+char* getTimeRunning(time_t start_time) {       /// requires freeing of return value
     time_t curr_time = time(NULL) - start_time;
     printf("%ld %ld %ld\n", time(NULL), start_time, curr_time);
     struct tm *timeinfo;
