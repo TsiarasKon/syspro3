@@ -5,7 +5,13 @@
 #include <time.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <poll.h>
 #include "util.h"
+
+#define CMD_LISTEN_QUEUE_SIZE 5
+#define CLIENT_LISTEN_QUEUE_SIZE 256
+
+volatile int thread_alive = 1;
 
 time_t start_time;
 /// these need mutexes
@@ -100,49 +106,72 @@ int main(int argc, char *argv[]) {
     }
     printf("Created thread pool.\n");
 
-    for (int i = 0; i < 100; i++) {
-        appendToFdList(i + 42);
-    }
-
     struct sockaddr_in server;
-    struct sockaddr_in cmd_client;
+    struct sockaddr_in command;
+    struct sockaddr_in client;
     struct sockaddr *serverptr = (struct sockaddr *) &server;
-    struct sockaddr *cmd_clientptr = (struct sockaddr *) &cmd_client;
-    socklen_t cmd_client_len;
+    struct sockaddr *commandptr = (struct sockaddr *) &command;
+    struct sockaddr *clientptr = (struct sockaddr *) &client;
+    socklen_t command_len;
+    socklen_t client_len;
 
-    int sock, cmdsock;
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {     // create socket
+    // Create sockets:
+    int commandsock, clientsock;
+    if ((commandsock = socket(AF_INET, SOCK_STREAM, 0)) < 0 || (clientsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
         return EC_SOCK;
     }
+    // Bind sockets:
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons((uint16_t) command_port);
-    if (bind(sock, serverptr, sizeof(server)) < 0) {     // bind socket to address
+    if (bind(commandsock, serverptr, sizeof(server)) < 0) {
         perror("bind");
         return EC_SOCK;
     }
-    /// listen size?
-    if (listen(sock, 5) < 0) {      // listen for connections
+    server.sin_port = htons((uint16_t) serving_port);
+    if (bind(clientsock, serverptr, sizeof(server)) < 0) {
+        perror("bind");
+        return EC_SOCK;
+    }
+    // Listen for connections:
+    if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0 || listen(clientsock, CLIENT_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
         return EC_SOCK;
     }
-    printf("Listening for commands to port %d\n", command_port);
+    struct pollfd pfds[2];
+    pfds[0].fd = commandsock;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = clientsock;
+    pfds[1].events = POLLIN;
+    int commandfd, clientfd;
     while (1) {
-        /// poll here
-        if ((cmdsock = accept(sock, cmd_clientptr, &cmd_client_len)) < 0) {      // accept connection
-            perror("accept");
+        if (poll(pfds, 2, -1) < 0) {
+            perror("poll");
             return EC_SOCK;
-        } else {
-            printf("Accepted connection\n");
-            if (command_handler(cmdsock) != EC_OK) {     // either error or "SHUTDOWN" was requested
+        }
+        if (pfds[0].revents & POLLIN) {      // commandsock is ready to accept
+            if ((commandfd = accept(commandsock, commandptr, &command_len)) < 0) {
+                perror("accept");
+                return EC_SOCK;
+            }
+            printf("Accepted command connection\n");
+            if (command_handler(commandfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
+                thread_alive = 0;
                 for (int i = 0; i < thread_num; i++) {
-                    pthread_join(pt_ids[i], NULL);
+                    /// pthread_join(pt_ids[i], NULL);
+                    pthread_cancel(pt_ids[i]);
                 }
-                printf("Joined with everyone!\n");
+                printf("All done!\n");
                 pthread_cond_destroy(&fdList_cond);
                 break;      ///
             }
+        } else {      // clientsock is ready to accept
+            if ((clientfd = accept(clientsock, clientptr, &client_len)) < 0) {
+                perror("accept");
+                return EC_SOCK;
+            }
+            appendToFdList(clientfd);
         }
     }
 
@@ -161,7 +190,7 @@ int command_handler(int cmdsock) {
     } else if (!strcmp(command, "SHUTDOWN")) {
         return -1;
     } else {
-        printf("Unknown server command.\n");
+        printf("Unknown server command '%s'.\n", command);
     }
     return EC_OK;
 }
@@ -169,7 +198,7 @@ int command_handler(int cmdsock) {
 void *connection_handler(void *args) {
     pthread_t self_id = pthread_self();
     printf("Thread %lu created\n", self_id);
-    while (1) {
+    while (thread_alive) {
         int sock = acquireFd();
         printf("Am thread %lu, got |%d|\n", self_id, sock);
 
