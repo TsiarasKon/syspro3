@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/myhttpd.dir/main.c.o"
   "CMakeFiles/myhttpd.dir/util.c.o"
+  "CMakeFiles/myhttpd.dir/requests.c.o"
   "myhttpd.pdb"
   "myhttpd"
 )

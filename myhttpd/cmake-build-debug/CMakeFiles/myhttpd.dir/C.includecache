@@ -26,14 +26,24 @@ poll.h
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
 
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c
+stdio.h
+-
+stdlib.h
+-
+requests.h
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.h
+util.h
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
+
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.h
+
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c
 stdio.h
 -
 time.h
 -
 stdlib.h
--
-string.h
 -
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h

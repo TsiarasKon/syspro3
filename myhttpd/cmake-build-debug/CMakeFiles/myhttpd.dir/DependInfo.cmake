@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
   "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/main.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles/myhttpd.dir/main.c.o"
+  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles/myhttpd.dir/requests.c.o"
   "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles/myhttpd.dir/util.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")

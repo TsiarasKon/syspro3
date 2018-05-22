@@ -14,7 +14,7 @@
 volatile int thread_alive = 1;
 
 time_t start_time;
-/// these need mutexes
+pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_served = 0;
 int bytes_served = 0;
 
@@ -46,6 +46,7 @@ void appendToFdList(int fd) {
 }
 
 int main(int argc, char *argv[]) {
+    printf("%s\n", getHTTPDate()); return 7;
     start_time = time(NULL);
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
@@ -104,7 +105,6 @@ int main(int argc, char *argv[]) {
             return EC_THREAD;
         }
     }
-    printf("Created thread pool.\n");
 
     struct sockaddr_in server;
     struct sockaddr_in command;
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
                 perror("accept");
                 return EC_SOCK;
             }
-            appendToFdList(clientfd);
+            appendToFdList(clientfd);     // will broadcast to threads to handle the new client
         }
     }
 
@@ -186,7 +186,9 @@ int command_handler(int cmdsock) {
     }
     strtok(command, "\r\n");
     if (!strcmp(command, "STATS")) {
+        pthread_mutex_lock(&stats_mutex);
         printf("Server up for %s, served %d pages, %d bytes.\n", getTimeRunning(start_time), pages_served, bytes_served);
+        pthread_mutex_unlock(&stats_mutex);
     } else if (!strcmp(command, "SHUTDOWN")) {
         return -1;
     } else {
@@ -195,14 +197,21 @@ int command_handler(int cmdsock) {
     return EC_OK;
 }
 
+void updateStats(int new_bytes_served) {
+    pthread_mutex_lock(&stats_mutex);
+    pages_served++;
+    bytes_served += new_bytes_served;
+    pthread_mutex_unlock(&stats_mutex);
+}
+
 void *connection_handler(void *args) {
     pthread_t self_id = pthread_self();
     printf("Thread %lu created\n", self_id);
     while (thread_alive) {
         int sock = acquireFd();
         printf("Am thread %lu, got |%d|\n", self_id, sock);
-
-        /// deleteStringListNode()
+        int curr_bytes_served = 42;
+        updateStats(curr_bytes_served);
     }
     printf("Why are we here?\n");
 }

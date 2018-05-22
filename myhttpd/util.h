@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef MYHTTPD_UTIL_H
+#define MYHTTPD_UTIL_H
 
 enum ErrorCodes {
     EC_OK,       // Success
@@ -17,6 +17,7 @@ enum ErrorCodes {
 const char *cmds[7];
 
 char* getTimeRunning(time_t start_time);    /// requires freeing of return value
+char* getHTTPDate();
 
 
 typedef struct intlistnode IntListNode;

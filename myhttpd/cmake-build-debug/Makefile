@@ -150,6 +150,33 @@ main.c.s:
 	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/main.c.s
 .PHONY : main.c.s
 
+requests.o: requests.c.o
+
+.PHONY : requests.o
+
+# target to build an object file
+requests.c.o:
+	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/requests.c.o
+.PHONY : requests.c.o
+
+requests.i: requests.c.i
+
+.PHONY : requests.i
+
+# target to preprocess a source file
+requests.c.i:
+	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/requests.c.i
+.PHONY : requests.c.i
+
+requests.s: requests.c.s
+
+.PHONY : requests.s
+
+# target to generate assembly for a file
+requests.c.s:
+	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/requests.c.s
+.PHONY : requests.c.s
+
 util.o: util.c.o
 
 .PHONY : util.o
@@ -189,6 +216,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... requests.o"
+	@echo "... requests.i"
+	@echo "... requests.s"
 	@echo "... util.o"
 	@echo "... util.i"
 	@echo "... util.s"

@@ -87,6 +87,12 @@
 		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/main.c">
 			<Option target="myhttpd"/>
 		</Unit>
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c">
+			<Option target="myhttpd"/>
+		</Unit>
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.h">
+			<Option target="myhttpd"/>
+		</Unit>
 		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c">
 			<Option target="myhttpd"/>
 		</Unit>
