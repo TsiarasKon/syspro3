@@ -25,11 +25,15 @@ poll.h
 -
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
+requests.h
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.h
 
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c
 stdio.h
 -
 stdlib.h
+-
+string.h
 -
 requests.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.h

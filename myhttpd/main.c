@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <poll.h>
 #include "util.h"
+#include "requests.h"
 
 #define CMD_LISTEN_QUEUE_SIZE 5
 #define CLIENT_LISTEN_QUEUE_SIZE 256
@@ -46,7 +47,6 @@ void appendToFdList(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-    printf("%s\n", getHTTPDate()); return 7;
     start_time = time(NULL);
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");

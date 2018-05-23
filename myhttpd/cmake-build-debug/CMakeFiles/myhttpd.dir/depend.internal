@@ -3,6 +3,7 @@
 
 CMakeFiles/myhttpd.dir/main.c.o
  /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/main.c
+ /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.h
  /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
 CMakeFiles/myhttpd.dir/requests.c.o
  /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c
