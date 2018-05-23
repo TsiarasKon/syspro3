@@ -1,3 +1,4 @@
+#define _GNU_SOURCE         // needed for asprintf()
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,6 +8,7 @@
 #include <pthread.h>
 #include <poll.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 #include "util.h"
 #include "requests.h"
 
@@ -14,6 +16,8 @@
 #define CLIENT_LISTEN_QUEUE_SIZE 256
 
 volatile int thread_alive = 1;
+
+char *root_dir = NULL;
 
 time_t start_time;
 pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -48,22 +52,12 @@ void appendToFdList(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-    char test_req[] = "GET /site0/page0_1244.html HTTP/1.1\n"
-            "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\n"
-            "Host: www.tutorialspoint.com\n"
-            "Accept-Language: en-us\n"
-            "Accept-Encoding: gzip, deflate\n"
-            "Connection: Keep-Alive\n\n";
-
-    char *requested_file;
-    char *hostname;
-    int rv = validateGETRequest(test_req, &requested_file, &hostname);
-    if (rv) {
-        printf("%d\n", rv);
-        return rv;
-    }
-    printf("|%s|\n|%s|\n", requested_file, hostname);
-    return 0;
+//    char test_req[] = "GET /site0/page0_1244.html HTTP/1.1\n"
+//            "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\n"
+//            "Host: www.tutorialspoint.com\n"
+//            "Accept-Language: en-us\n"
+//            "Accept-Encoding: gzip, deflate\n"
+//            "Connection: Keep-Alive\n\n";
 
     start_time = time(NULL);
     if (argc != 9) {
@@ -73,7 +67,6 @@ int main(int argc, char *argv[]) {
     int serving_port = -1;
     int command_port = -1;
     int thread_num = -1;
-    char *root_dir = NULL;
     int option;
     while ((option = getopt(argc, argv,"p:c:t:d")) != -1) {
         switch (option) {
@@ -207,7 +200,7 @@ int main(int argc, char *argv[]) {
 int command_handler(int cmdsock) {
     char command[BUFSIZ];        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
-        perror("Error reading from pipe");
+        perror("Error reading from socket");
         return EC_SOCK;
     }
     strtok(command, "\r\n");
@@ -232,7 +225,7 @@ void updateStats(int new_bytes_served) {
 
 void *connection_handler(void *args) {
     pthread_t self_id = pthread_self();
-    printf("Thread %lu created\n", self_id);
+    printf("Thread %lu created.\n", self_id);
     while (thread_alive) {
         int sock = acquireFd();
         printf("Am thread %lu, got |%d| socket\n", self_id, sock);
@@ -258,15 +251,40 @@ void *connection_handler(void *args) {
         } while (bytes_read > 0);
         printf("|%s|\n", msg_buf);
 
-        char *requested_file;
-        char *hostname;
-        if (validateGETRequest(msg_buf, &requested_file, &hostname)) {
-
+        char *responseString;
+        char *requested_file, *hostname;
+        int rv = validateGETRequest(msg_buf, &requested_file, &hostname);
+        if (rv > 0) {    // Fatal Error
+            return NULL;
+        } else if (rv < 0) {
+            responseString = createResponseString(HTTP_BADREQUEST, NULL);
+        } else {    // valid request
+            char *requested_file_path;
+            asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
+            FILE *fp = fopen(requested_file_path, "r");
+            if (fp == NULL) {       // failed to open file
+                if (errno == EACCES) {      // failed with "Permission denied"
+                    responseString = createResponseString(HTTP_FORBIDDEN, NULL);
+                } else {      // file doesn't exist
+                    responseString = createResponseString(HTTP_NOTFOUND, NULL);
+                }
+            } else {
+                responseString = createResponseString(HTTP_OK, fp);
+                fclose(fp);
+                curr_bytes_served = sizeof(responseString);     /// or strlen() ?
+            }
+            free(requested_file_path);
         }
-
+        if (write(sock, responseString, sizeof(responseString)) < 0) {
+            perror("Error writing to socket");
+            return NULL;
+        }
+        free(responseString);
         free(msg_buf);
-        updateStats(curr_bytes_served);
+        if (curr_bytes_served > 0) {
+            updateStats(curr_bytes_served);
+        }
     }
-    printf("Why are we here?\n");
+    printf("Thread %lu has exited.\n", self_id);
 }
 

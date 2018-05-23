@@ -48,27 +48,27 @@ const char server[] = "Server: myhttpd/1.0.0 (Ubuntu64)";
 const char cont_type[] = "Content-Type: text/html";
 const char conn[] = "Connection: Closed";
 
-char *createResponseString(int response, int fd) {
+char *createResponseString(int response, FILE *fp) {
     char *date = getHTTPDate();
     char *header, *cont_len, *content;
     switch (response) {
-        case 200:
+        case HTTP_OK:
             asprintf(&header, "HTTP/1.1 200 OK");
             /// content
             asprintf(&content, "<content %d>", fd);
             asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);     ///
             break;
-        case 400:
+        case HTTP_BADREQUEST:
             asprintf(&header, "HTTP/1.1 400 Bad Request");
             asprintf(&content, "<html>Your request was bad and you should feel bad.</html>");
             asprintf(&cont_len, "Content-Length: 124");       ///
             break;
-        case 403:
+        case HTTP_FORBIDDEN:
             asprintf(&header, "HTTP/1.1 403 Forbidden");
             asprintf(&content, "<html>You have no power here! No permissions, that is.</html>");
             asprintf(&cont_len, "Content-Length: 124");       ///
             break;
-        case 404:
+        case HTTP_NOTFOUND:
             asprintf(&header, "HTTP/1.1 404 Not Found");
             asprintf(&content, "<html>Your file is in another castle. Or directory. Not sure.</html>");
             asprintf(&cont_len, "Content-Length: 124");
