@@ -6,10 +6,11 @@
 #include <netinet/in.h>
 #include <pthread.h>
 #include <poll.h>
+#include <sys/ioctl.h>
 #include "util.h"
 #include "requests.h"
 
-#define CMD_LISTEN_QUEUE_SIZE 5
+#define CMD_LISTEN_QUEUE_SIZE 10
 #define CLIENT_LISTEN_QUEUE_SIZE 256
 
 volatile int thread_alive = 1;
@@ -47,6 +48,23 @@ void appendToFdList(int fd) {
 }
 
 int main(int argc, char *argv[]) {
+    char test_req[] = "GET /site0/page0_1244.html HTTP/1.1\n"
+            "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\n"
+            "Host: www.tutorialspoint.com\n"
+            "Accept-Language: en-us\n"
+            "Accept-Encoding: gzip, deflate\n"
+            "Connection: Keep-Alive\n\n";
+
+    char *requested_file;
+    char *hostname;
+    int rv = validateGETRequest(test_req, &requested_file, &hostname);
+    if (rv) {
+        printf("%d\n", rv);
+        return rv;
+    }
+    printf("|%s|\n|%s|\n", requested_file, hostname);
+    return 0;
+
     start_time = time(NULL);
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
@@ -117,7 +135,11 @@ int main(int argc, char *argv[]) {
 
     // Create sockets:
     int commandsock, clientsock;
-    if ((commandsock = socket(AF_INET, SOCK_STREAM, 0)) < 0 || (clientsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    if ((commandsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("socket");
+        return EC_SOCK;
+    }
+    if ((clientsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
         return EC_SOCK;
     }
@@ -135,7 +157,11 @@ int main(int argc, char *argv[]) {
         return EC_SOCK;
     }
     // Listen for connections:
-    if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0 || listen(clientsock, CLIENT_LISTEN_QUEUE_SIZE) < 0) {
+    if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0) {
+        perror("listen");
+        return EC_SOCK;
+    }
+    if (listen(clientsock, CLIENT_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
         return EC_SOCK;
     }
@@ -209,8 +235,36 @@ void *connection_handler(void *args) {
     printf("Thread %lu created\n", self_id);
     while (thread_alive) {
         int sock = acquireFd();
-        printf("Am thread %lu, got |%d|\n", self_id, sock);
-        int curr_bytes_served = 42;
+        printf("Am thread %lu, got |%d| socket\n", self_id, sock);
+        int curr_bytes_served = 0;
+        char curr_buf[BUFSIZ] = "";
+        char *msg_buf = malloc(BUFSIZ);
+        msg_buf[0] = '\0';
+        ssize_t bytes_read;
+        /// poll?
+        do {
+            bytes_read = read(sock, curr_buf, BUFSIZ);
+            /// err_check
+            curr_buf[BUFSIZ - 1] = '\0';
+            printf("%ld |%s|\n", bytes_read, curr_buf);
+
+            if (bytes_read < 0) {
+                perror("Error reading from socket");
+                return NULL;
+            } else if (bytes_read > 0) {
+                msg_buf = realloc(msg_buf, sizeof(msg_buf) + BUFSIZ);
+                strcat(msg_buf, curr_buf);
+            }
+        } while (bytes_read > 0);
+        printf("|%s|\n", msg_buf);
+
+        char *requested_file;
+        char *hostname;
+        if (validateGETRequest(msg_buf, &requested_file, &hostname)) {
+
+        }
+
+        free(msg_buf);
         updateStats(curr_bytes_served);
     }
     printf("Why are we here?\n");
