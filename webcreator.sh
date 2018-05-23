@@ -80,7 +80,8 @@ $out_links
 		echo "  Creating page $site_name with $m lines starting at line $k of \"$2\" ..."
 		steps=$(($f + $q))
 		for st in $(seq 1 "$steps"); do
-			site_text+=$(sed -n "$sd1","$sd2"p "$2")	# add "m/(f+q)" lines to site_text
+			# add "m/(f+q)" lines to site_text, appending <br> for visibility reasons:
+			site_text+=$(sed -n "$sd1","$sd2"p "$2" | awk '{print $0, "<br>"}')	
 			sd1=$(($sd2 + 1))
 			((sd2 += $inc))
 			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")		# add one link after
