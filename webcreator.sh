@@ -40,7 +40,7 @@ for i in $(seq 0 "$w1"); do
 	for j in $(seq 0 $p1); do
 		pg="$1"/site"$i"/page"$j"_"${randnums[$j]}".html
 		sitelist+="$pg
-";
+"
 	done
 done
 sitelist=$(head -n -1 <<< "$sitelist")		# remove empty last line
@@ -59,11 +59,13 @@ html_footers="	</body>
 linked=""		# keep sites with incoming links here
 for i in $(seq 0 "$w1"); do
 	echo "Creating web site $i ..."
-	out_links=$(echo "$sitelist" | grep -v "site$i" | shuf -n "$f")	
+	out_links=$(echo "$sitelist" | grep -v "site$i" | shuf -n "$f")
+	echo "$out_links"	
 	for j in $(seq 0 $p1); do
 		site_index=$(($i * $4 + $j + 1))
 		site_name=$(sed -n "$site_index {p;q;}" <<< "$sitelist")	# get site_name from sitelist
 		in_links=$(echo "$sitelist" | grep "site$i" | grep -v "page$j" | shuf -n "$q")
+		echo "$in_links"	
 		page_links=$(head -n -1 <<< "$in_links
 $out_links
 " | shuf)	# shuffle the selected in_links and out_links
@@ -85,7 +87,13 @@ $out_links
 			sd1=$(($sd2 + 1))
 			((sd2 += $inc))
 			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")		# add one link after
-			site_text+="<a href=\"$line_link\">link${link_index}_text</a>
+			# convert links from abolute to relative paths:
+			if [[ $line_link =~ /$1/site$site_index/* ]]; then	# page is in same site
+				rel_line_link=$(sed "s/$1\/site[0-9]*/./" <<< "$line_link")
+			else
+				rel_line_link=$(sed "s/$1/../" <<< "$line_link")	
+			fi
+			site_text+="<a href=\"$rel_line_link\">link${link_index}_text</a>
 "
 			echo "    Adding link to $line_link"
 			((link_index ++))

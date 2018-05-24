@@ -276,7 +276,6 @@ void *connection_handler(void *args) {
             }
             free(requested_file_path);
         }
-        printf("%s\n", responseString);
         if (write(sock, responseString, strlen(responseString) + 1) < 0) {      /// +1 ?
             perror("Error writing to socket");
             return NULL;
