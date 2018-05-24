@@ -16,7 +16,7 @@ enum ErrorCodes {
 
 const char *cmds[7];
 
-char* getTimeRunning(time_t start_time);    /// requires freeing of return value
+char* getTimeRunning(time_t start_time);
 char* getHTTPDate();
 
 

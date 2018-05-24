@@ -8,7 +8,6 @@
 int validateGETRequest(char *request, char **requested_file, char **hostname) {
     char *curr_line_save;
     char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
-    printf("|%s|\n", curr_line);
     if (curr_line == NULL) {
         return -1;
     }
@@ -85,6 +84,17 @@ char *createResponseString(int response, FILE *fp) {
     free(content);
     return responseString;
 }
+
+int endOfRequest(char const *request) {      // Search entire request for double newline
+    while (*request != '\0') {
+        if (*request == '\n' && (*(request + 1) == '\n' || (*(request + 1) == '\r' && *(request + 2) == '\n'))) {
+            return 1;
+        }
+        request++;
+    }
+    return 0;
+}
+
 
 char *fileToString(FILE *fp) {
     if (fp == NULL) {

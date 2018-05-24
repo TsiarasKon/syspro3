@@ -22,7 +22,7 @@ char *root_dir = NULL;
 time_t start_time;
 pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_served = 0;
-int bytes_served = 0;
+long bytes_served = 0;
 
 IntList *fdList;
 pthread_mutex_t fdList_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -206,7 +206,7 @@ int command_handler(int cmdsock) {
     strtok(command, "\r\n");
     if (!strcmp(command, "STATS")) {
         pthread_mutex_lock(&stats_mutex);
-        printf("Server up for %s, served %d pages, %d bytes.\n", getTimeRunning(start_time), pages_served, bytes_served);
+        printf("Server up for %s, served %d pages, %ld bytes.\n", getTimeRunning(start_time), pages_served, bytes_served);
         pthread_mutex_unlock(&stats_mutex);
     } else if (!strcmp(command, "SHUTDOWN")) {
         close(cmdsock);
@@ -218,7 +218,7 @@ int command_handler(int cmdsock) {
     return EC_OK;
 }
 
-void updateStats(int new_bytes_served) {
+void updateStats(long new_bytes_served) {
     pthread_mutex_lock(&stats_mutex);
     pages_served++;
     bytes_served += new_bytes_served;
@@ -231,7 +231,7 @@ void *connection_handler(void *args) {
     while (thread_alive) {
         int sock = acquireFd();
         printf("Am thread %lu, got |%d| socket\n", self_id, sock);
-        int curr_bytes_served = 0;
+        long curr_bytes_served = 0;
         char curr_buf[BUFSIZ] = "";
         char *msg_buf = malloc(BUFSIZ);
         msg_buf[0] = '\0';
@@ -246,6 +246,9 @@ void *connection_handler(void *args) {
             } else if (bytes_read > 0) {
                 msg_buf = realloc(msg_buf, sizeof(msg_buf) + BUFSIZ);
                 strcat(msg_buf, curr_buf);
+                if (endOfRequest(msg_buf)) {       // if double newline was found
+                    break;
+                }
             }
         } while (bytes_read > 0);
 
@@ -259,7 +262,6 @@ void *connection_handler(void *args) {
         } else {    // valid request
             char *requested_file_path;
             asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
-            printf("%s\n", requested_file_path);
             FILE *fp = fopen(requested_file_path, "r");
             if (fp == NULL) {       // failed to open file
                 if (errno == EACCES) {      // failed with "Permission denied"
@@ -270,12 +272,12 @@ void *connection_handler(void *args) {
             } else {
                 responseString = createResponseString(HTTP_OK, fp);
                 fclose(fp);
-                curr_bytes_served = sizeof(responseString);     /// or strlen() ?
+                curr_bytes_served = strlen(responseString);
             }
             free(requested_file_path);
         }
         printf("%s\n", responseString);
-        if (write(sock, responseString, sizeof(responseString)) < 0) {
+        if (write(sock, responseString, strlen(responseString) + 1) < 0) {      /// +1 ?
             perror("Error writing to socket");
             return NULL;
         }
