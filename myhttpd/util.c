@@ -77,13 +77,13 @@ int popIntListNode(IntList *list) {
     IntListNode* head = list->first;
     list->first = list->first->next;
     int x = head->fd;
-    /// destroy head
+    free(head);
     return x;
 }
 
 void deleteIntList(IntList **list) {
     if (*list == NULL) {
-        fprintf(stderr, "Attempted to delete a NULL StringList.\n");
+        fprintf(stderr, "Attempted to delete a NULL IntList.\n");
         return;
     }
     IntListNode *current = (*list)->first;

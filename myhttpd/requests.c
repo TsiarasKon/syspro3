@@ -5,7 +5,7 @@
 #include "requests.h"
 #include "util.h"
 
-int validateGETRequest(char *request, char **requested_file, char **hostname) {
+int validateGETRequest(char *request, char **requested_file) {
     char *curr_line_save;
     char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
     if (curr_line == NULL) {
@@ -30,14 +30,6 @@ int validateGETRequest(char *request, char **requested_file, char **hostname) {
     while ((curr_line = strtok_r(NULL, "\r\n", &curr_line_save)) != NULL) {
         /// Possible future feature: checking other fields as well
         if (strlen(curr_line) > 6 && !strncmp(curr_line, "Host: ", 6)) {      // found host
-            strtok_r(curr_line, " ", &curr_line_save);
-            word = strtok_r(NULL, " ", &curr_line_save);
-            *hostname = malloc(strlen(word) + 1);
-            if (*hostname == NULL) {
-                perror("malloc");
-                return EC_MEM;
-            }
-            strcpy(*hostname, word);
             return 0;
         }
     }
@@ -106,11 +98,21 @@ char *fileToString(FILE *fp) {
     fseek(fp, 0, SEEK_END);
     length = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    buffer = malloc((size_t) length);
+    buffer = malloc((size_t) length + 1);
     if (buffer == NULL) {
         perror("malloc in fileToString");
         return NULL;
     }
     fread(buffer, 1, (size_t) length, fp);
+    buffer[length] = '\0';
     return buffer;
 }
+
+/* Sample request (use telnet) :
+    GET /site1/page1_4520.html HTTP/1.1
+    User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)
+    Host: www.tutorialspoint.com
+    Accept-Language: en-us
+    Accept-Encoding: gzip, deflate
+    Connection: Keep-Alive
+*/

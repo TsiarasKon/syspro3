@@ -82,8 +82,9 @@ $out_links
 		echo "  Creating page $site_name with $m lines starting at line $k of \"$2\" ..."
 		steps=$(($f + $q))
 		for st in $(seq 1 "$steps"); do
-			# add "m/(f+q)" lines to site_text, appending <br> for visibility reasons:
-			site_text+=$(sed -n "$sd1","$sd2"p "$2")	
+			# add "m/(f+q)" lines to site_text:
+			site_text+=$(sed -n "$sd1,$sd2 p" "$2")
+			#sed 's/$/<br>/'	# appending <br> for visibility reasons
 			sd1=$(($sd2 + 1))
 			((sd2 += $inc))
 			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")		# add one link after
@@ -93,7 +94,7 @@ $out_links
 			else
 				rel_line_link=$(sed "s/$1/../" <<< "$line_link")	
 			fi
-			site_text+="<a href=\"$rel_line_link\">link${link_index}_text</a>
+			site_text+="<a href=\"$rel_line_link\">link${link_index}_text</a><br>
 "
 			echo "    Adding link to $line_link"
 			((link_index ++))

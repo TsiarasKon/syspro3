@@ -33,7 +33,7 @@ void *connection_handler(void *args);
 
 int acquireFd() {
     pthread_mutex_lock(&fdList_mutex);
-    while (isIntListEmpty(fdList)) {
+    while (isIntListEmpty(fdList) && thread_alive) {
         pthread_cond_wait(&fdList_cond, &fdList_mutex);
     }
     int fd = popIntListNode(fdList);
@@ -52,13 +52,6 @@ void appendToFdList(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-//    char test_req[] = "GET /site0/page0_1244.html HTTP/1.1\n"
-//            "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\n"
-//            "Host: www.tutorialspoint.com\n"
-//            "Accept-Language: en-us\n"
-//            "Accept-Encoding: gzip, deflate\n"
-//            "Connection: Keep-Alive\n\n";
-
     start_time = time(NULL);
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
@@ -123,8 +116,8 @@ int main(int argc, char *argv[]) {
     struct sockaddr *serverptr = (struct sockaddr *) &server;
     struct sockaddr *commandptr = (struct sockaddr *) &command;
     struct sockaddr *clientptr = (struct sockaddr *) &client;
-    socklen_t command_len;
-    socklen_t client_len;
+    socklen_t command_len = 0;
+    socklen_t client_len = 0;
 
     // Create sockets:
     int commandsock, clientsock;
@@ -177,13 +170,14 @@ int main(int argc, char *argv[]) {
             printf("Accepted command connection\n");
             if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
                 thread_alive = 0;
-                for (int i = 0; i < thread_num; i++) {
-                    /// pthread_join(pt_ids[i], NULL);
-                    pthread_cancel(pt_ids[i]);
+                for (int i = 0; i < thread_num; i++) {      // wake all the threads
+                    pthread_cond_broadcast(&fdList_cond);
                 }
-                printf("All done!\n");
+                for (int i = 0; i < thread_num; i++) {      // join with all the threads
+                    pthread_join(pt_ids[i], NULL);
+                }
                 pthread_cond_destroy(&fdList_cond);
-                break;      ///
+                break;
             }
         } else {      // clientsock is ready to accept
             if ((newfd = accept(clientsock, clientptr, &client_len)) < 0) {
@@ -193,7 +187,8 @@ int main(int argc, char *argv[]) {
             appendToFdList(newfd);     // will broadcast to threads to handle the new client
         }
     }
-
+    deleteIntList(&fdList);
+    printf("Server has exited.\n");
     return EC_OK;
 }
 
@@ -205,9 +200,12 @@ int command_handler(int cmdsock) {
     }
     strtok(command, "\r\n");
     if (!strcmp(command, "STATS")) {
+        char *timeRunning;
         pthread_mutex_lock(&stats_mutex);
-        printf("Server up for %s, served %d pages, %ld bytes.\n", getTimeRunning(start_time), pages_served, bytes_served);
+        timeRunning = getTimeRunning(start_time);
+        printf("Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served);
         pthread_mutex_unlock(&stats_mutex);
+        free(timeRunning);
     } else if (!strcmp(command, "SHUTDOWN")) {
         close(cmdsock);
         return -1;
@@ -226,11 +224,15 @@ void updateStats(long new_bytes_served) {
 }
 
 void *connection_handler(void *args) {
+    /// TODO: timeout
     pthread_t self_id = pthread_self();
     printf("Thread %lu created.\n", self_id);
     while (thread_alive) {
         int sock = acquireFd();
-        printf("Am thread %lu, got |%d| socket\n", self_id, sock);
+        if (! thread_alive) {     // SHUTDOWN arrived while thread was waiting to acquireFd
+            break;
+        }
+        printf("Thread %lu: Received a request.\n", self_id);
         long curr_bytes_served = 0;
         char curr_buf[BUFSIZ] = "";
         char *msg_buf = malloc(BUFSIZ);
@@ -242,7 +244,7 @@ void *connection_handler(void *args) {
             curr_buf[BUFSIZ - 1] = '\0';
             if (bytes_read < 0) {
                 perror("Error reading from socket");
-                return NULL;
+                return (void *) EC_SOCK;
             } else if (bytes_read > 0) {
                 msg_buf = realloc(msg_buf, sizeof(msg_buf) + BUFSIZ);
                 strcat(msg_buf, curr_buf);
@@ -253,12 +255,13 @@ void *connection_handler(void *args) {
         } while (bytes_read > 0);
 
         char *responseString;
-        char *requested_file, *hostname;
-        int rv = validateGETRequest(msg_buf, &requested_file, &hostname);
+        char *requested_file;
+        int rv = validateGETRequest(msg_buf, &requested_file);
         if (rv > 0) {    // Fatal Error
-            return NULL;
+            return (void *) EC_MEM;
         } else if (rv < 0) {
             responseString = createResponseString(HTTP_BADREQUEST, NULL);
+            printf("Thread %lu: Responded with \"400 Bad Request\".\n", self_id);
         } else {    // valid request
             char *requested_file_path;
             asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
@@ -266,19 +269,23 @@ void *connection_handler(void *args) {
             if (fp == NULL) {       // failed to open file
                 if (errno == EACCES) {      // failed with "Permission denied"
                     responseString = createResponseString(HTTP_FORBIDDEN, NULL);
+                    printf("Thread %lu: Responded with \"403 Forbidden\".\n", self_id);
                 } else {      // file doesn't exist
                     responseString = createResponseString(HTTP_NOTFOUND, NULL);
+                    printf("Thread %lu: Responded with \"404 Not Found\".\n", self_id);
                 }
             } else {
                 responseString = createResponseString(HTTP_OK, fp);
+                printf("Thread %lu: Responded with \"200 OK\".\n", self_id);
                 fclose(fp);
                 curr_bytes_served = strlen(responseString);
             }
             free(requested_file_path);
         }
+        free(requested_file);
         if (write(sock, responseString, strlen(responseString) + 1) < 0) {      /// +1 ?
             perror("Error writing to socket");
-            return NULL;
+            return (void *) EC_SOCK;
         }
         free(responseString);
         free(msg_buf);
@@ -288,5 +295,6 @@ void *connection_handler(void *args) {
         close(sock);
     }
     printf("Thread %lu has exited.\n", self_id);
+    return NULL;
 }
 
