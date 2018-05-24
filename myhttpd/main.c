@@ -8,14 +8,13 @@
 #include <pthread.h>
 #include <poll.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 #include <errno.h>
 #include "util.h"
 #include "requests.h"
 
 #define CMD_LISTEN_QUEUE_SIZE 10
 #define CLIENT_LISTEN_QUEUE_SIZE 256
-
-volatile int thread_alive = 1;
 
 char *root_dir = NULL;
 
@@ -30,6 +29,13 @@ pthread_cond_t fdList_cond;
 
 int command_handler(int cmdsock);
 void *connection_handler(void *args);
+
+volatile int thread_alive = 1;
+volatile int server_alive = 1;
+
+void server_killer(int signum) {
+    server_alive = 0;
+}
 
 int acquireFd() {
     pthread_mutex_lock(&fdList_mutex);
@@ -97,9 +103,6 @@ int main(int argc, char *argv[]) {
         return EC_ARG;
     }
 
-    /// TODO: Signal handling
-
-
     fdList = createIntList();
     pthread_cond_init(&fdList_cond, NULL);
     pthread_t pt_ids[thread_num];
@@ -109,6 +112,14 @@ int main(int argc, char *argv[]) {
             return EC_THREAD;
         }
     }
+
+    // Signal handling for graceful exit on fatal signals:
+    struct sigaction act;
+    memset(&act, 0, sizeof(act));
+    act.sa_handler = server_killer;
+    sigaction(SIGINT,  &act, 0);
+    sigaction(SIGTERM, &act, 0);
+    sigaction(SIGQUIT, &act, 0);
 
     struct sockaddr_in server;
     struct sockaddr_in command;
@@ -128,6 +139,14 @@ int main(int argc, char *argv[]) {
     if ((clientsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
         return EC_SOCK;
+    }
+    // Setting SO_REUSEADDR so that server can be restarted without bind() failing with "Address already in use"
+    int literally_just_one = 1;
+    if (setsockopt(commandsock, SOL_SOCKET, SO_REUSEADDR, &literally_just_one, sizeof(int)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+    }
+    if (setsockopt(clientsock, SOL_SOCKET, SO_REUSEADDR, &literally_just_one, sizeof(int)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
     }
     // Bind sockets:
     server.sin_family = AF_INET;
@@ -157,8 +176,11 @@ int main(int argc, char *argv[]) {
     pfds[1].fd = clientsock;
     pfds[1].events = POLLIN;
     int newfd;
-    while (1) {
+    while (server_alive) {
         if (poll(pfds, 2, -1) < 0) {
+            if (errno == EINTR) {       // killing signal arrived
+                break;
+            }
             perror("poll");
             return EC_SOCK;
         }
@@ -167,17 +189,8 @@ int main(int argc, char *argv[]) {
                 perror("accept");
                 return EC_SOCK;
             }
-            printf("Accepted command connection\n");
             if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
-                thread_alive = 0;
-                for (int i = 0; i < thread_num; i++) {      // wake all the threads
-                    pthread_cond_broadcast(&fdList_cond);
-                }
-                for (int i = 0; i < thread_num; i++) {      // join with all the threads
-                    pthread_join(pt_ids[i], NULL);
-                }
-                pthread_cond_destroy(&fdList_cond);
-                break;
+                server_alive = 0;
             }
         } else {      // clientsock is ready to accept
             if ((newfd = accept(clientsock, clientptr, &client_len)) < 0) {
@@ -187,8 +200,16 @@ int main(int argc, char *argv[]) {
             appendToFdList(newfd);     // will broadcast to threads to handle the new client
         }
     }
+    thread_alive = 0;
+    for (int i = 0; i < thread_num; i++) {      // wake all the threads
+        pthread_cond_broadcast(&fdList_cond);
+    }
+    for (int i = 0; i < thread_num; i++) {      // join with all the threads
+        pthread_join(pt_ids[i], NULL);
+    }
+    pthread_cond_destroy(&fdList_cond);
     deleteIntList(&fdList);
-    printf("Server has exited.\n");
+    printf("Main thread has exited.\n");
     return EC_OK;
 }
 
@@ -200,17 +221,19 @@ int command_handler(int cmdsock) {
     }
     strtok(command, "\r\n");
     if (!strcmp(command, "STATS")) {
+        printf("Main thread: Received \"STATS\" command.\n");
         char *timeRunning;
         pthread_mutex_lock(&stats_mutex);
         timeRunning = getTimeRunning(start_time);
-        printf("Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served);
+        printf(" Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served);
         pthread_mutex_unlock(&stats_mutex);
         free(timeRunning);
     } else if (!strcmp(command, "SHUTDOWN")) {
+        printf("Main thread: Received \"SHUTDOWN\" command ...\n");
         close(cmdsock);
         return -1;
     } else {
-        printf("Unknown server command '%s'.\n", command);
+        printf("Main thread: Unknown command \"%s\".\n", command);
     }
     close(cmdsock);
     return EC_OK;

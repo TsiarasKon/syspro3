@@ -89,6 +89,7 @@ int endOfRequest(char const *request) {      // Search entire request for double
 
 
 char *fileToString(FILE *fp) {
+    // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
     if (fp == NULL) {
         fprintf(stderr, "fileToString() with empty file.");
         return NULL;
