@@ -2,18 +2,27 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include "util.h"
 
 const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-char* getTimeRunning(time_t start_time) {
-    time_t curr_time = time(NULL) - start_time;
-    struct tm *timeinfo;
-    timeinfo = gmtime(&curr_time);
+char* getTimeRunning(struct timeval start_time) {
+    struct timeval curr_time;
+    gettimeofday(&curr_time, NULL);
+    long long msRunning = ((curr_time.tv_sec - start_time.tv_sec) * 1000000LL + curr_time.tv_usec - start_time.tv_usec) / 1000;
+    time_t secRunning = msRunning / 1000;
+    struct tm *timeRunning;
+    timeRunning = gmtime(&secRunning);
     char *time_str;
-    /// TODO: include .ms       gettimeofday()
-    asprintf(&time_str, "%.2d:%.2d:%.2d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+    if (timeRunning->tm_hour > 0) {
+        asprintf(&time_str, "%.2d:%.2d:%.2d.%.2lld", timeRunning->tm_hour, timeRunning->tm_min, timeRunning->tm_sec, (msRunning % 1000) / 10);
+    } else if (timeRunning->tm_min > 0) {
+        asprintf(&time_str, "%.2d:%.2d.%.2lld", timeRunning->tm_min, timeRunning->tm_sec, (msRunning % 1000) / 10);
+    } else {
+        asprintf(&time_str, "%.2d.%.2lld", timeRunning->tm_sec, (msRunning % 1000) / 10);
+    }
     return time_str;
 }
 

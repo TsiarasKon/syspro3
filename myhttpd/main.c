@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/time.h>
 #include "util.h"
 #include "requests.h"
 
@@ -18,7 +19,7 @@
 
 char *root_dir = NULL;
 
-time_t start_time;
+struct timeval start_time;
 pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_served = 0;
 long bytes_served = 0;
@@ -58,7 +59,7 @@ void appendToFdList(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-    start_time = time(NULL);
+    gettimeofday(&start_time, NULL);
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
         return EC_ARG;
@@ -103,13 +104,14 @@ int main(int argc, char *argv[]) {
         return EC_ARG;
     }
 
+    int rv = EC_OK;
     fdList = createIntList();
     pthread_cond_init(&fdList_cond, NULL);
     pthread_t pt_ids[thread_num];
     for (int i = 0; i < thread_num; i++) {
         if (pthread_create(&pt_ids[i], NULL, connection_handler, NULL)) {
             perror("pthread_create");
-            return EC_THREAD;
+            rv = EC_THREAD;
         }
     }
 
@@ -134,11 +136,11 @@ int main(int argc, char *argv[]) {
     int commandsock, clientsock;
     if ((commandsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
-        return EC_SOCK;
+        rv = EC_SOCK;
     }
     if ((clientsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
-        return EC_SOCK;
+        rv = EC_SOCK;
     }
     // Setting SO_REUSEADDR so that server can be restarted without bind() failing with "Address already in use"
     int literally_just_one = 1;
@@ -154,21 +156,21 @@ int main(int argc, char *argv[]) {
     server.sin_port = htons((uint16_t) command_port);
     if (bind(commandsock, serverptr, sizeof(server)) < 0) {
         perror("bind");
-        return EC_SOCK;
+        rv = EC_SOCK;
     }
     server.sin_port = htons((uint16_t) serving_port);
     if (bind(clientsock, serverptr, sizeof(server)) < 0) {
         perror("bind");
-        return EC_SOCK;
+        rv = EC_SOCK;
     }
     // Listen for connections:
     if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
-        return EC_SOCK;
+        rv = EC_SOCK;
     }
     if (listen(clientsock, CLIENT_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
-        return EC_SOCK;
+        rv = EC_SOCK;
     }
     struct pollfd pfds[2];
     pfds[0].fd = commandsock;
@@ -176,18 +178,18 @@ int main(int argc, char *argv[]) {
     pfds[1].fd = clientsock;
     pfds[1].events = POLLIN;
     int newfd;
-    while (server_alive) {
+    while (server_alive && !rv) {
         if (poll(pfds, 2, -1) < 0) {
             if (errno == EINTR) {       // killing signal arrived
                 break;
             }
             perror("poll");
-            return EC_SOCK;
+            rv = EC_SOCK;
         }
         if (pfds[0].revents & POLLIN) {      // commandsock is ready to accept
             if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
                 perror("accept");
-                return EC_SOCK;
+                rv = EC_SOCK;
             }
             if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
                 server_alive = 0;
@@ -195,7 +197,7 @@ int main(int argc, char *argv[]) {
         } else {      // clientsock is ready to accept
             if ((newfd = accept(clientsock, clientptr, &client_len)) < 0) {
                 perror("accept");
-                return EC_SOCK;
+                rv = EC_SOCK;
             }
             appendToFdList(newfd);     // will broadcast to threads to handle the new client
         }
@@ -210,7 +212,7 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&fdList_cond);
     deleteIntList(&fdList);
     printf("Main thread has exited.\n");
-    return EC_OK;
+    return rv;
 }
 
 int command_handler(int cmdsock) {
