@@ -7,7 +7,8 @@
 
 int validateGETRequest(char *request, char **requested_file, char **hostname) {
     char *curr_line_save;
-    char *curr_line = strtok_r(request, "\n", &curr_line_save);
+    char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
+    printf("|%s|\n", curr_line);
     if (curr_line == NULL) {
         return -1;
     }
@@ -27,7 +28,7 @@ int validateGETRequest(char *request, char **requested_file, char **hostname) {
     if (word == NULL || strcmp(word, "HTTP/1.1") != 0) {
         return -1;
     }
-    while ((curr_line = strtok_r(NULL, "\n", &curr_line_save)) != NULL) {
+    while ((curr_line = strtok_r(NULL, "\r\n", &curr_line_save)) != NULL) {
         /// Possible future feature: checking other fields as well
         if (strlen(curr_line) > 6 && !strncmp(curr_line, "Host: ", 6)) {      // found host
             strtok_r(curr_line, " ", &curr_line_save);
@@ -54,24 +55,23 @@ char *createResponseString(int response, FILE *fp) {
     switch (response) {
         case HTTP_OK:
             asprintf(&header, "HTTP/1.1 200 OK");
-            /// content
-            asprintf(&content, "<content %d>", fd);
+            content = fileToString(fp);
             asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);     ///
             break;
         case HTTP_BADREQUEST:
             asprintf(&header, "HTTP/1.1 400 Bad Request");
             asprintf(&content, "<html>Your request was bad and you should feel bad.</html>");
-            asprintf(&cont_len, "Content-Length: 124");       ///
+            asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);
             break;
         case HTTP_FORBIDDEN:
             asprintf(&header, "HTTP/1.1 403 Forbidden");
             asprintf(&content, "<html>You have no power here! No permissions, that is.</html>");
-            asprintf(&cont_len, "Content-Length: 124");       ///
+            asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);
             break;
         case HTTP_NOTFOUND:
             asprintf(&header, "HTTP/1.1 404 Not Found");
             asprintf(&content, "<html>Your file is in another castle. Or directory. Not sure.</html>");
-            asprintf(&cont_len, "Content-Length: 124");
+            asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);
             break;
         default:        // should never get here
             free(date);
@@ -84,4 +84,23 @@ char *createResponseString(int response, FILE *fp) {
     free(cont_len);
     free(content);
     return responseString;
+}
+
+char *fileToString(FILE *fp) {
+    if (fp == NULL) {
+        fprintf(stderr, "fileToString() with empty file.");
+        return NULL;
+    }
+    char *buffer = 0;
+    long length;
+    fseek(fp, 0, SEEK_END);
+    length = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    buffer = malloc((size_t) length);
+    if (buffer == NULL) {
+        perror("malloc in fileToString");
+        return NULL;
+    }
+    fread(buffer, 1, (size_t) length, fp);
+    return buffer;
 }

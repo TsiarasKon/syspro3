@@ -7,7 +7,7 @@
 const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-char* getTimeRunning(time_t start_time) {       /// requires freeing of return value
+char* getTimeRunning(time_t start_time) {
     time_t curr_time = time(NULL) - start_time;
     struct tm *timeinfo;
     timeinfo = gmtime(&curr_time);
@@ -17,7 +17,7 @@ char* getTimeRunning(time_t start_time) {       /// requires freeing of return v
     return time_str;
 }
 
-char* getHTTPDate() {       /// requires freeing of return value
+char* getHTTPDate() {
     time_t curr_time = time(NULL);
     struct tm *t;
     t = gmtime(&curr_time);

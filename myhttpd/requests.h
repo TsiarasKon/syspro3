@@ -9,4 +9,6 @@
 int validateGETRequest(char *request, char **requested_file, char **hostname);
 char *createResponseString(int response, FILE *fp);
 
+char *fileToString(FILE *fp);
+
 #endif

@@ -163,19 +163,19 @@ int main(int argc, char *argv[]) {
     pfds[0].events = POLLIN;
     pfds[1].fd = clientsock;
     pfds[1].events = POLLIN;
-    int commandfd, clientfd;
+    int newfd;
     while (1) {
         if (poll(pfds, 2, -1) < 0) {
             perror("poll");
             return EC_SOCK;
         }
         if (pfds[0].revents & POLLIN) {      // commandsock is ready to accept
-            if ((commandfd = accept(commandsock, commandptr, &command_len)) < 0) {
+            if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
                 perror("accept");
                 return EC_SOCK;
             }
             printf("Accepted command connection\n");
-            if (command_handler(commandfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
+            if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
                 thread_alive = 0;
                 for (int i = 0; i < thread_num; i++) {
                     /// pthread_join(pt_ids[i], NULL);
@@ -186,11 +186,11 @@ int main(int argc, char *argv[]) {
                 break;      ///
             }
         } else {      // clientsock is ready to accept
-            if ((clientfd = accept(clientsock, clientptr, &client_len)) < 0) {
+            if ((newfd = accept(clientsock, clientptr, &client_len)) < 0) {
                 perror("accept");
                 return EC_SOCK;
             }
-            appendToFdList(clientfd);     // will broadcast to threads to handle the new client
+            appendToFdList(newfd);     // will broadcast to threads to handle the new client
         }
     }
 
@@ -209,10 +209,12 @@ int command_handler(int cmdsock) {
         printf("Server up for %s, served %d pages, %d bytes.\n", getTimeRunning(start_time), pages_served, bytes_served);
         pthread_mutex_unlock(&stats_mutex);
     } else if (!strcmp(command, "SHUTDOWN")) {
+        close(cmdsock);
         return -1;
     } else {
         printf("Unknown server command '%s'.\n", command);
     }
+    close(cmdsock);
     return EC_OK;
 }
 
@@ -234,13 +236,10 @@ void *connection_handler(void *args) {
         char *msg_buf = malloc(BUFSIZ);
         msg_buf[0] = '\0';
         ssize_t bytes_read;
-        /// poll?
         do {
+            memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(sock, curr_buf, BUFSIZ);
-            /// err_check
             curr_buf[BUFSIZ - 1] = '\0';
-            printf("%ld |%s|\n", bytes_read, curr_buf);
-
             if (bytes_read < 0) {
                 perror("Error reading from socket");
                 return NULL;
@@ -249,7 +248,6 @@ void *connection_handler(void *args) {
                 strcat(msg_buf, curr_buf);
             }
         } while (bytes_read > 0);
-        printf("|%s|\n", msg_buf);
 
         char *responseString;
         char *requested_file, *hostname;
@@ -261,6 +259,7 @@ void *connection_handler(void *args) {
         } else {    // valid request
             char *requested_file_path;
             asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
+            printf("%s\n", requested_file_path);
             FILE *fp = fopen(requested_file_path, "r");
             if (fp == NULL) {       // failed to open file
                 if (errno == EACCES) {      // failed with "Permission denied"
@@ -275,6 +274,7 @@ void *connection_handler(void *args) {
             }
             free(requested_file_path);
         }
+        printf("%s\n", responseString);
         if (write(sock, responseString, sizeof(responseString)) < 0) {
             perror("Error writing to socket");
             return NULL;
@@ -284,6 +284,7 @@ void *connection_handler(void *args) {
         if (curr_bytes_served > 0) {
             updateStats(curr_bytes_served);
         }
+        close(sock);
     }
     printf("Thread %lu has exited.\n", self_id);
 }
