@@ -123,6 +123,33 @@ mycrawler/fast:
 	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/build
 .PHONY : mycrawler/fast
 
+lists.o: lists.c.o
+
+.PHONY : lists.o
+
+# target to build an object file
+lists.c.o:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.o
+.PHONY : lists.c.o
+
+lists.i: lists.c.i
+
+.PHONY : lists.i
+
+# target to preprocess a source file
+lists.c.i:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.i
+.PHONY : lists.c.i
+
+lists.s: lists.c.s
+
+.PHONY : lists.s
+
+# target to generate assembly for a file
+lists.c.s:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.s
+.PHONY : lists.c.s
+
 main.o: main.c.o
 
 .PHONY : main.o
@@ -213,6 +240,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... mycrawler"
+	@echo "... lists.o"
+	@echo "... lists.i"
+	@echo "... lists.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

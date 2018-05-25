@@ -13,16 +13,23 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include "util.h"
+#include "lists.h"
 #include "requests.h"
 
 #define CMD_LISTEN_QUEUE_SIZE 5
 
 char *save_dir = NULL;
 
+// Stats:
 struct timeval start_time;
 pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_downloaded = 0;
 long bytes_downloaded = 0;
+
+StringList *linkList;
+pthread_mutex_t linkList_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t linkList_cond;
+int waiting = 0;
 
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
@@ -32,6 +39,22 @@ void crawler_killer(int signum) {
 }
 
 int command_handler(int cmdsock);
+void *crawler_thread(void *args);
+
+int acquireLink() {
+    pthread_mutex_lock(&linkList_mutex);
+    waiting++;
+    while (isStringListEmpty(linkList) && thread_alive) {
+        pthread_cond_wait(&linkList_cond, &linkList_mutex);
+    }
+    char *link = popStringListNode(linkList);
+    waiting--;
+    pthread_mutex_unlock(&linkList_mutex);
+    if (! isStringListEmpty(linkList)) {
+        pthread_cond_broadcast(&fdList_cond);
+    }
+    return fd;
+}
 
 int main(int argc, char *argv[]) {
     gettimeofday(&start_time, NULL);
@@ -84,8 +107,6 @@ int main(int argc, char *argv[]) {
     }
 
     int rv = EC_OK;
-
-    /// Create string list and threads
 
     // Signal handling for graceful exit on fatal signals:
     struct sigaction act;
@@ -140,9 +161,23 @@ int main(int argc, char *argv[]) {
     server.sin_family = AF_INET;
     memcpy(&server.sin_addr, hent->h_addr, (size_t) hent->h_length);
     server.sin_port = htons((uint16_t) server_port);
+
+//    fdList = createIntList();
+    pthread_cond_init(&linkList_cond, NULL);
+    pthread_t pt_ids[thread_num];
+    for (int i = 0; i < thread_num; i++) {
+        if (pthread_create(&pt_ids[i], NULL, crawler_thread, NULL)) {
+            perror("pthread_create");
+            rv = EC_THREAD;
+        }
+    }
+
     int newfd;
     while (crawler_alive && !rv) {
         if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
+            if (errno == EINTR) {   ///
+                printf("Told ya!\n");
+            }
             perror("accept");
             rv = EC_SOCK;
         }
@@ -191,3 +226,84 @@ int command_handler(int cmdsock) {
     return EC_OK;
 }
 
+void updateStats(long new_bytes_downloaded) {
+    pthread_mutex_lock(&stats_mutex);
+    pages_downloaded++;
+    bytes_downloaded += new_bytes_downloaded;
+    pthread_mutex_unlock(&stats_mutex);
+}
+
+void *connection_handler(void *args) {
+    /// TODO: timeout
+    pthread_t self_id = pthread_self();
+    printf("Thread %lu created.\n", self_id);
+    while (thread_alive) {
+        int sock = acquireFd();
+        if (! thread_alive) {     // SHUTDOWN arrived while thread was waiting to acquireFd
+            break;
+        }
+        printf("Thread %lu: Received a request.\n", self_id);
+        long curr_bytes_downloaded = 0;
+        char curr_buf[BUFSIZ] = "";
+        char *msg_buf = malloc(BUFSIZ);
+        msg_buf[0] = '\0';
+        ssize_t bytes_read;
+        do {
+            memset(&curr_buf[0], 0, sizeof(curr_buf));
+            bytes_read = read(sock, curr_buf, BUFSIZ);
+            curr_buf[BUFSIZ - 1] = '\0';
+            if (bytes_read < 0) {
+                perror("Error reading from socket");
+                return (void *) EC_SOCK;
+            } else if (bytes_read > 0) {
+                msg_buf = realloc(msg_buf, sizeof(msg_buf) + BUFSIZ);
+                strcat(msg_buf, curr_buf);
+                if (endOfRequest(msg_buf)) {       // if double newline was found
+                    break;
+                }
+            }
+        } while (bytes_read > 0);
+
+        char *responseString;
+        char *requested_file;
+        int rv = validateGETRequest(msg_buf, &requested_file);
+        if (rv > 0) {    // Fatal Error
+            return (void *) EC_MEM;
+        } else if (rv < 0) {
+            responseString = createResponseString(HTTP_BADREQUEST, NULL);
+            printf("Thread %lu: Responded with \"400 Bad Request\".\n", self_id);
+        } else {    // valid request
+            char *requested_file_path;
+            asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
+            FILE *fp = fopen(requested_file_path, "r");
+            if (fp == NULL) {       // failed to open file
+                if (errno == EACCES) {      // failed with "Permission denied"
+                    responseString = createResponseString(HTTP_FORBIDDEN, NULL);
+                    printf("Thread %lu: Responded with \"403 Forbidden\".\n", self_id);
+                } else {      // file doesn't exist
+                    responseString = createResponseString(HTTP_NOTFOUND, NULL);
+                    printf("Thread %lu: Responded with \"404 Not Found\".\n", self_id);
+                }
+            } else {
+                responseString = createResponseString(HTTP_OK, fp);
+                printf("Thread %lu: Responded with \"200 OK\".\n", self_id);
+                fclose(fp);
+                curr_bytes_downloaded = strlen(responseString);
+            }
+            free(requested_file_path);
+        }
+        free(requested_file);
+        if (write(sock, responseString, strlen(responseString) + 1) < 0) {      /// +1 ?
+            perror("Error writing to socket");
+            return (void *) EC_SOCK;
+        }
+        free(responseString);
+        free(msg_buf);
+        if (curr_bytes_downloaded > 0) {
+            updateStats(curr_bytes_downloaded);
+        }
+        close(sock);
+    }
+    printf("Thread %lu has exited.\n", self_id);
+    return NULL;
+}

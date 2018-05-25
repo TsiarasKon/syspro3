@@ -19,6 +19,7 @@
 
 char *root_dir = NULL;
 
+// Stats:
 struct timeval start_time;
 pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_served = 0;
@@ -28,15 +29,15 @@ IntList *fdList;
 pthread_mutex_t fdList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t fdList_cond;
 
-int command_handler(int cmdsock);
-void *connection_handler(void *args);
-
 volatile int thread_alive = 1;
 volatile int server_alive = 1;
 
 void server_killer(int signum) {
     server_alive = 0;
 }
+
+int command_handler(int cmdsock);
+void *connection_handler(void *args);
 
 int acquireFd() {
     pthread_mutex_lock(&fdList_mutex);
