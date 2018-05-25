@@ -14,7 +14,7 @@
 #include "util.h"
 #include "requests.h"
 
-#define CMD_LISTEN_QUEUE_SIZE 10
+#define CMD_LISTEN_QUEUE_SIZE 5
 #define CLIENT_LISTEN_QUEUE_SIZE 256
 
 char *root_dir = NULL;
