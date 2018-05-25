@@ -31,6 +31,8 @@ errno.h
 -
 sys/time.h
 -
+netdb.h
+-
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.h
 requests.h

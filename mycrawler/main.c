@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <netdb.h>
 #include "util.h"
 #include "requests.h"
 
@@ -29,6 +30,8 @@ volatile int crawler_alive = 1;
 void crawler_killer(int signum) {
     crawler_alive = 0;
 }
+
+int command_handler(int cmdsock);
 
 int main(int argc, char *argv[]) {
     gettimeofday(&start_time, NULL);
@@ -79,7 +82,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "command_port must be different from the server's port.\n");
         return EC_ARG;
     }
-    printf("%s %d %d %d %s %s\n", hostaddr, server_port, command_port, thread_num, save_dir, starting_URL);
 
     int rv = EC_OK;
 
@@ -94,9 +96,12 @@ int main(int argc, char *argv[]) {
     sigaction(SIGQUIT, &act, 0);
 
     struct sockaddr_in server;
+    struct sockaddr_in crawler;
     struct sockaddr_in command;
     struct sockaddr *serverptr = (struct sockaddr *) &server;
+    struct sockaddr *crawlerptr = (struct sockaddr *) &crawler;
     struct sockaddr *commandptr = (struct sockaddr *) &command;
+    struct hostent *hent;
     socklen_t command_len = 0;
     socklen_t client_len = 0;
 
@@ -116,27 +121,34 @@ int main(int argc, char *argv[]) {
         perror("setsockopt(SO_REUSEADDR) failed");
     }
     // Bind command socket:
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port = htons((uint16_t) command_port);
-    if (bind(commandsock, serverptr, sizeof(server)) < 0) {
+    crawler.sin_family = AF_INET;
+    crawler.sin_addr.s_addr = htonl(INADDR_ANY);
+    crawler.sin_port = htons((uint16_t) command_port);
+    if (bind(commandsock, crawlerptr, sizeof(crawler)) < 0) {
         perror("bind");
         rv = EC_SOCK;
     }
-    // Listen for connections:
+    // Listen for connections to commandsock:
     if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
         rv = EC_SOCK;
     }
+    if ((hent = gethostbyname(hostaddr)) == NULL) {
+        perror("gethostbyname");
+        rv = EC_SOCK;
+    }
+    server.sin_family = AF_INET;
+    memcpy(&server.sin_addr, hent->h_addr, (size_t) hent->h_length);
+    server.sin_port = htons((uint16_t) server_port);
     int newfd;
     while (crawler_alive && !rv) {
         if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
             perror("accept");
             rv = EC_SOCK;
         }
-//        if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
-//            crawler_alive = 0;
-//        }
+        if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
+            crawler_alive = 0;
+        }
     }
     thread_alive = 0;
 //    for (int i = 0; i < thread_num; i++) {      // wake all the threads
@@ -147,7 +159,35 @@ int main(int argc, char *argv[]) {
 //    }
 //    pthread_cond_destroy(&fdList_cond);
 //    deleteIntList(&fdList);
-//    printf("Main thread has exited.\n");
+    printf("Main thread has exited.\n");
     return rv;
+}
+
+int command_handler(int cmdsock) {
+    char command[BUFSIZ];        // Undoubtedly fits a single command
+    if (read(cmdsock, command, BUFSIZ) < 0) {
+        perror("Error reading from socket");
+        return EC_SOCK;
+    }
+    strtok(command, "\r\n");
+    if (!strcmp(command, "STATS")) {
+        printf("Main thread: Received \"STATS\" command.\n");
+        char *timeRunning;
+        pthread_mutex_lock(&stats_mutex);
+        timeRunning = getTimeRunning(start_time);
+        printf(" Crawler up for %s, downloaded %d pages, %ld bytes.\n", timeRunning, pages_downloaded, bytes_downloaded);
+        pthread_mutex_unlock(&stats_mutex);
+        free(timeRunning);
+    } else if (!strcmp(command, "SEARCH")) {
+        /// TODO: Implement SEARCH
+    } else if (!strcmp(command, "SHUTDOWN")) {
+        printf("Main thread: Received \"SHUTDOWN\" command ...\n");
+        close(cmdsock);
+        return -1;
+    } else {
+        printf("Main thread: Unknown command \"%s\".\n", command);
+    }
+    close(cmdsock);
+    return EC_OK;
 }
 
