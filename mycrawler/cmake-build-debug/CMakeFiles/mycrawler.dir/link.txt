@@ -1,1 +1,1 @@
-/usr/bin/cc -g   CMakeFiles/mycrawler.dir/main.c.o CMakeFiles/mycrawler.dir/util.c.o CMakeFiles/mycrawler.dir/requests.c.o CMakeFiles/mycrawler.dir/lists.c.o  -o mycrawler 
+/usr/bin/cc -g   CMakeFiles/mycrawler.dir/main.c.o CMakeFiles/mycrawler.dir/util.c.o CMakeFiles/mycrawler.dir/requests.c.o CMakeFiles/mycrawler.dir/lists.c.o  -o mycrawler -lpthread 

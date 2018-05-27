@@ -41,6 +41,10 @@ void destroyStringListNode(StringListNode **listnode) {
 }
 
 int appendStringListNode(StringList *list, char *string) {
+    if (list == NULL) {
+        fprintf(stderr, "Attempted to append to a NULL StringList.\n");
+        return EC_INVALID;
+    }
     if (list->first == NULL) {
         list->first = createStringListNode(string);
         if (list->first == NULL) {
@@ -54,6 +58,22 @@ int appendStringListNode(StringList *list, char *string) {
         return EC_MEM;
     }
     list->last = list->last->next;
+    return EC_OK;
+}
+
+int appendStringList(StringList *list1, StringList **list2) {
+    if (list1 == NULL || *list2 == NULL) {
+        fprintf(stderr, "Attempted to appendStringList() on NULL lists.\n");
+        return EC_INVALID;
+    }
+    if (list1->first == NULL) {     // list1 is empty
+        list1->first = (*list2)->first;
+    } else {
+        list1->last->next = (*list2)->first;
+    }
+    list1->last = (*list2)->last;
+    free(*list2);
+    *list2 = NULL;
     return EC_OK;
 }
 
@@ -113,6 +133,10 @@ IntListNode* createIntListNode(int x) {
 }
 
 int appendIntListNode(IntList *list, int x) {
+    if (list == NULL) {
+        fprintf(stderr, "Attempted to append to a NULL IntList.\n");
+        return EC_INVALID;
+    }
     if (list->first == NULL) {
         list->first = createIntListNode(x);
         if (list->first == NULL) {

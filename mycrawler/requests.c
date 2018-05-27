@@ -36,11 +36,21 @@ int validateGETRequest(char *request, char **requested_file) {
     return -2;
 }
 
+char *generateGETRequest(char *filename) {
+    char *header;
+    asprintf(&header, "GET %s HTTP/1.1", filename);
+    char host[] = "Host: localhost";
+    char *request;
+    asprintf(&request, "%s\n%s\n\n", header, host);
+    free(header);
+    return request;
+}
+
 const char server[] = "Server: myhttpd/1.0.0 (Ubuntu64)";
 const char cont_type[] = "Content-Type: text/html";
 const char conn[] = "Connection: Closed";
 
-char *createResponseString(int response, FILE *fp) {
+char *generateResponseString(int response, FILE *fp) {
     char *date = getHTTPDate();
     char *header, *cont_len, *content;
     switch (response) {

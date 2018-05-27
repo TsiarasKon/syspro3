@@ -17,6 +17,7 @@ struct stringlist {
 StringList* createStringList();
 int isStringListEmpty(StringList *list);
 int appendStringListNode(StringList *list, char *string);
+int appendStringList(StringList *list1, StringList **list2);
 char* popStringListNode(StringList *list);
 void deleteStringList(StringList **list);
 
@@ -39,4 +40,4 @@ int appendIntListNode(IntList *list, int x);
 int popIntListNode(IntList *list);
 void deleteIntList(IntList **list);
 
-#endif LISTS_H
+#endif
