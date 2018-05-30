@@ -182,12 +182,12 @@ int main(int argc, char *argv[]) {
     visitedLinkList = createStringList();
     StringList *temp = createStringList();
     appendStringListNode(temp, starting_URL);
-    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page3_1386.html");
-    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page3_1386.html");
+//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
     appendToLinkList(temp);
     destroyStringList(&temp);
 
@@ -366,6 +366,12 @@ void *crawler_thread(void *args) {
         if (mkdir_path(link_path_copy)) {
             return (void *) EC_DIR;
         }
+
+        StringList *content_links = retrieveLinks(&content, hostaddr, server_port);
+        if (content_links == NULL) {
+            return (void *) EC_MEM;
+        }
+        appendToLinkList(content_links);
 
         FILE *fp = fopen(link_path, "w");
         if (fp == NULL) {       // failed to open file

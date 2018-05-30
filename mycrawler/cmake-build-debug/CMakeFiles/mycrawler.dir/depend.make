@@ -10,6 +10,7 @@ CMakeFiles/mycrawler.dir/main.c.o: ../main.c
 CMakeFiles/mycrawler.dir/main.c.o: ../requests.h
 CMakeFiles/mycrawler.dir/main.c.o: ../util.h
 
+CMakeFiles/mycrawler.dir/requests.c.o: ../lists.h
 CMakeFiles/mycrawler.dir/requests.c.o: ../requests.c
 CMakeFiles/mycrawler.dir/requests.c.o: ../requests.h
 CMakeFiles/mycrawler.dir/requests.c.o: ../util.h

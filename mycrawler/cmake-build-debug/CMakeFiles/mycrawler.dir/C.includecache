@@ -65,12 +65,16 @@ stdlib.h
 -
 string.h
 -
+limits.h
+-
 requests.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.h
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.h
 
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.h
+lists.h
+/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.h
 
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.c
 stdio.h

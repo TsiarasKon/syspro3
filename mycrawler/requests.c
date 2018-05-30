@@ -2,16 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "requests.h"
 #include "util.h"
 
 int validateGETRequest(char *request, char **requested_file) {
-    char *curr_line_save;
+    char *curr_line_save = NULL;
     char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
     if (curr_line == NULL) {
         return -1;
     }
-    char *word_save;
+    char *word_save = NULL;
     char *word = strtok_r(curr_line, " ", &word_save);
     if (word == NULL || strcmp(word, "GET") != 0) {
         return -1;
@@ -103,7 +104,7 @@ int endOfRequest(char const *request) {      // Return the index of the second n
 }
 
 long getContentLength(char *request) {
-    char *curr_line_save;
+    char *curr_line_save = NULL;
     char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
     while (curr_line != NULL) {
         if (strlen(curr_line) > 16 && !strncmp(curr_line, "Content-Length: ", 16)) {
@@ -135,6 +136,32 @@ char *fileToString(FILE *fp) {
     buffer[length] = '\0';
     return buffer;
 }
+
+StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port) {
+    char *content_ptr = *content;
+    StringList *content_links = createStringList();
+    if (content_links == NULL) {
+        return NULL;
+    }
+    int i = 0;
+    while (content_ptr[i] != '\0') {
+        if (!strncmp(content_ptr + i, "<a href=\"", 9)) {
+            i += 9;
+            char new_link[PATH_MAX];        // link len won't be larger than PATH_MAX
+            sprintf(new_link, "http://%s:%d", hostaddr, server_port);
+            int j = (int) strlen(new_link);
+            while (content_ptr[i] != '\0' && content_ptr[i] != '\"') {
+                new_link[j] = content_ptr[i];
+                j++;
+                i++;
+            }
+            appendStringListNode(content_links, new_link);
+        }
+        i++;
+    }
+    return content_links;
+}
+
 
 /* Sample request (use telnet) :
     GET /site1/page1_4520.html HTTP/1.1

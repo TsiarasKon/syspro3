@@ -1,3 +1,5 @@
+#include "lists.h"
+
 #ifndef REQUESTS_H
 #define REQUESTS_H
 
@@ -14,5 +16,7 @@ int endOfRequest(char const *request);
 long getContentLength(char *request);
 
 char *fileToString(FILE *fp);
+
+StringList *retrieveLinks(char **content, char *hostaddr, int server_port);
 
 #endif
