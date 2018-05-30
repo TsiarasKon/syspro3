@@ -18,6 +18,19 @@ int isStringListEmpty(StringList *list) {
     return (list == NULL || list->first == NULL);
 }
 
+int existsInStringList(StringList *list, char *string) {
+    if (list != NULL) {
+        StringListNode *current = list->first;
+        while (current != NULL) {
+            if (!strcmp(current->string, string)) {
+                return 1;
+            }
+            current = current->next;
+        }
+    }
+    return 0;
+}
+
 StringListNode* createStringListNode(char *string) {
     StringListNode *listNode = malloc(sizeof(StringListNode));
     if (listNode == NULL) {
@@ -89,7 +102,7 @@ char *popStringListNode(StringList *list) {
     return string;
 }
 
-void deleteStringList(StringList **list) {
+void destroyStringList(StringList **list) {
     if (*list == NULL) {
         fprintf(stderr, "Attempted to delete a NULL StringList.\n");
         return;
@@ -164,7 +177,7 @@ int popIntListNode(IntList *list) {
     return x;
 }
 
-void deleteIntList(IntList **list) {
+void deleteIntList(IntList **list) {        /// after merge refactor: destroy
     if (*list == NULL) {
         fprintf(stderr, "Attempted to delete a NULL IntList.\n");
         return;

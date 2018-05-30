@@ -20,7 +20,6 @@
 
 #define CMD_LISTEN_QUEUE_SIZE 5
 
-int serversock;
 char *save_dir = NULL;
 char *hostaddr = NULL;
 int server_port = -1;
@@ -37,6 +36,8 @@ StringList *visitedLinkList;
 pthread_mutex_t linkList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t linkList_cond;
 int waiting = 0;
+
+pthread_mutex_t dir_creation_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
@@ -57,8 +58,10 @@ char *acquireLink() {
     char *link = popStringListNode(waitingLinkList);
     waiting--;
     pthread_mutex_unlock(&linkList_mutex);
-    if (link == NULL) {
-        kill(getpid(), SIGINT);
+    if (link == NULL && thread_alive == 1) {
+        thread_alive = 0;
+        printf("Site downloading complete. SEARCH command is now available.\n");
+        kill(getpid(), SIGINT);     ///
     }
     if (! isStringListEmpty(waitingLinkList)) {
         pthread_cond_broadcast(&linkList_cond);
@@ -66,11 +69,24 @@ char *acquireLink() {
     return link;
 }
 
-void appendToLinkList(StringList **list) {
+void appendToLinkList(StringList *list) {
+    int newLinks = 0;
+    StringListNode *current = list->first;
     pthread_mutex_lock(&linkList_mutex);
-    appendStringList(waitingLinkList, list);
+    while (current != NULL) {
+        if (existsInStringList(visitedLinkList, current->string)) {     // link has already been processed
+            current = current->next;
+            continue;
+        }
+        newLinks = 1;
+        appendStringListNode(waitingLinkList, current->string);
+        appendStringListNode(visitedLinkList, current->string);
+        current = current->next;
+    }
     pthread_mutex_unlock(&linkList_mutex);
-    pthread_cond_broadcast(&linkList_cond);
+    if (newLinks) {
+        pthread_cond_broadcast(&linkList_cond);
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -143,10 +159,6 @@ int main(int argc, char *argv[]) {
         perror("socket");
         rv = EC_SOCK;
     }
-    if ((serversock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("socket");
-        rv = EC_SOCK;
-    }
     // Setting SO_REUSEADDR so that server can be restarted without bind() failing with "Address already in use"
     int literally_just_one = 1;
     if (setsockopt(commandsock, SOL_SOCKET, SO_REUSEADDR, &literally_just_one, sizeof(int)) < 0) {
@@ -170,7 +182,14 @@ int main(int argc, char *argv[]) {
     visitedLinkList = createStringList();
     StringList *temp = createStringList();
     appendStringListNode(temp, starting_URL);
-    appendToLinkList(&temp);
+    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page3_1386.html");
+    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
+    appendToLinkList(temp);
+    destroyStringList(&temp);
 
     pthread_cond_init(&linkList_cond, NULL);
     pthread_t pt_ids[thread_num];
@@ -203,8 +222,8 @@ int main(int argc, char *argv[]) {
         pthread_join(pt_ids[i], NULL);
     }
     pthread_cond_destroy(&linkList_cond);
-    deleteStringList(&waitingLinkList);
-    deleteStringList(&visitedLinkList);
+    destroyStringList(&waitingLinkList);
+    destroyStringList(&visitedLinkList);
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -231,7 +250,11 @@ int command_handler(int cmdsock) {
         free(stats_response);
         free(timeRunning);
     } else if (!strcmp(command, "SEARCH")) {
-        /// TODO: Implement SEARCH
+        if (thread_alive) {
+            printf("Main thread: SEARCH command cannot be executed right now - Site downloading is still in progress.\n");
+        } else {
+            /// TODO: Implement SEARCH
+        }
     } else if (!strcmp(command, "SHUTDOWN")) {
         printf("Main thread: Received SHUTDOWN command ...\n");
         close(cmdsock);
@@ -260,11 +283,11 @@ void *crawler_thread(void *args) {
             break;
         }
         printf("Thread %lu: Received %s.\n", self_id, link);
-        // Process link before requesting it:
-        if (strlen(link) > 4 && !strncmp(link, "http", 4)) {      // skip "http://"
-            link = strchr(link, '/') + 2;
+        int serversock;
+        if ((serversock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            perror("socket");
+            return (void *) EC_SOCK;
         }
-        link = strchr(link, '/');       // skip link address
         struct sockaddr_in server;
         struct sockaddr *serverptr = (struct sockaddr *) &server;
         struct hostent *hent;
@@ -279,6 +302,12 @@ void *crawler_thread(void *args) {
             perror("listen");
             return (void *) EC_SOCK;
         }
+
+        // Process link before requesting it:
+        if (strlen(link) > 4 && !strncmp(link, "http", 4)) {      // skip "http://"
+            link = strchr(link, '/') + 2;
+        }
+        link = strchr(link, '/');       // skip link address
         char *request = generateGETRequest(link);
         if (write(serversock, request, strlen(request) + 1) < 0) {      /// +1 ?
             perror("Error writing to socket");
@@ -306,7 +335,7 @@ void *crawler_thread(void *args) {
         } while (bytes_read > 0);
         long content_len = getContentLength(msg_buf);
         if (content_len < 0) {
-            return (void *) EC_HTTP;
+            continue;
         }
         char *content = malloc((size_t) content_len);
         if (content == NULL) {
@@ -343,7 +372,7 @@ void *crawler_thread(void *args) {
             perror("fopen");
             return (void *) EC_FILE;
         }
-        fwrite(content, 1, (size_t) content_len, fp);
+        fprintf(fp, "%s", content);
         fclose(fp);
         printf("Thread %lu: Saved %s to disk.\n", self_id, link);
 

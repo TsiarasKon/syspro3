@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <errno.h>
+#include <pthread.h>
 #include "util.h"
 
 #define DIRPERMS (S_IRWXU | S_IRWXG)        // default 0660
@@ -43,10 +44,12 @@ char* getHTTPDate() {
 }
 
 int mkdir_path(char *linkpath) {         // recursively create all directories in link path
+    extern pthread_mutex_t dir_creation_mutex;
     struct stat st = {0};
     char full_path[PATH_MAX];
     char *curr_dir_save;
     char *curr_dir = strtok_r(linkpath, "/", &curr_dir_save);
+    pthread_mutex_lock(&dir_creation_mutex);
     while (curr_dir != NULL) {
         if (strchr(curr_dir, '.') != NULL) {    // path contains '.' - probably an .html file and not a dir
             break;
@@ -56,10 +59,12 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
         if (stat(full_path, &st) < 0) {
             if (mkdir(full_path, DIRPERMS) < 0) {
                 perror("mkdir");
+                pthread_mutex_unlock(&dir_creation_mutex);
                 return EC_DIR;
             }
         }
         curr_dir = strtok_r(NULL, "/", &curr_dir_save);
     }
+    pthread_mutex_unlock(&dir_creation_mutex);
     return 0;
 }

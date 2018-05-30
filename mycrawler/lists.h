@@ -16,10 +16,11 @@ struct stringlist {
 };
 StringList* createStringList();
 int isStringListEmpty(StringList *list);
+int existsInStringList(StringList *list, char *string);
 int appendStringListNode(StringList *list, char *string);
 int appendStringList(StringList *list1, StringList **list2);
 char* popStringListNode(StringList *list);
-void deleteStringList(StringList **list);
+void destroyStringList(StringList **list);
 
 
 typedef struct intlistnode IntListNode;
