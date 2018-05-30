@@ -183,6 +183,7 @@ int main(int argc, char *argv[]) {
             perror("accept");
             rv = EC_SOCK;
         }
+        printf("Main thread: Established command connection.\n");
         if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
             crawler_alive = 0;
         }
@@ -208,17 +209,23 @@ int command_handler(int cmdsock) {
     }
     strtok(command, "\r\n");
     if (!strcmp(command, "STATS")) {
-        printf("Main thread: Received \"STATS\" command.\n");
-        char *timeRunning;
+        printf("Main thread: Received STATS command.\n");
+        char *timeRunning, *stats_response;
         pthread_mutex_lock(&stats_mutex);
         timeRunning = getTimeRunning(start_time);
-        printf(" Crawler up for %s, downloaded %d pages, %ld bytes.\n", timeRunning, pages_downloaded, bytes_downloaded);
+        asprintf(&stats_response, " Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served);
         pthread_mutex_unlock(&stats_mutex);
+        if (write(cmdsock, stats_response, strlen(stats_response) + 1) < 0) {
+            perror("Error writing to socket");
+            return EC_SOCK;
+        }
+        printf("%s", stats_response);
+        free(stats_response);
         free(timeRunning);
     } else if (!strcmp(command, "SEARCH")) {
         /// TODO: Implement SEARCH
     } else if (!strcmp(command, "SHUTDOWN")) {
-        printf("Main thread: Received \"SHUTDOWN\" command ...\n");
+        printf("Main thread: Received SHUTDOWN command ...\n");
         close(cmdsock);
         return -1;
     } else {

@@ -25,7 +25,11 @@ poll.h
 -
 sys/ioctl.h
 -
+signal.h
+-
 errno.h
+-
+sys/time.h
 -
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h
@@ -52,6 +56,8 @@ stdio.h
 time.h
 -
 stdlib.h
+-
+sys/time.h
 -
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.h

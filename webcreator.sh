@@ -38,7 +38,7 @@ for i in $(seq 0 "$w1"); do
 	mkdir "$di"
 	randnums=($(shuf -i 1000-"$p9000" -n "$4"))		# effectively creating 4-digit random numbers
 	for j in $(seq 0 $p1); do
-		pg="$1"/site"$i"/page"$j"_"${randnums[$j]}".html
+		pg=/site"$i"/page"$j"_"${randnums[$j]}".html
 		sitelist+="$pg
 "
 	done
@@ -55,17 +55,16 @@ html_headers="<!DOCTYPE html>
 html_footers="	</body>
 </html>"
 
+
 # Create sites' contents and the sites themseleves:
 linked=""		# keep sites with incoming links here
 for i in $(seq 0 "$w1"); do
 	echo "Creating web site $i ..."
-	out_links=$(echo "$sitelist" | grep -v "site$i" | shuf -n "$f")
-	echo "$out_links"	
+	out_links=$(echo "$sitelist" | grep -v "site$i" | shuf -n "$f")	
 	for j in $(seq 0 $p1); do
 		site_index=$(($i * $4 + $j + 1))
 		site_name=$(sed -n "$site_index {p;q;}" <<< "$sitelist")	# get site_name from sitelist
 		in_links=$(echo "$sitelist" | grep "site$i" | grep -v "page$j" | shuf -n "$q")
-		echo "$in_links"	
 		page_links=$(head -n -1 <<< "$in_links
 $out_links
 " | shuf)	# shuffle the selected in_links and out_links
@@ -82,25 +81,19 @@ $out_links
 		echo "  Creating page $site_name with $m lines starting at line $k of \"$2\" ..."
 		steps=$(($f + $q))
 		for st in $(seq 1 "$steps"); do
-			# add "m/(f+q)" lines to site_text:
-			site_text+=$(sed -n "$sd1,$sd2 p" "$2")
-			#sed 's/$/<br>/'	# appending <br> for visibility reasons
+			# add "m/(f+q)" lines to site_text, appending <br> for visibility reasons:
+			site_text+=$(sed -n "$sd1","$sd2"p "$2")
+				### | sed 's/$/<br>/'	
 			sd1=$(($sd2 + 1))
 			((sd2 += $inc))
 			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")		# add one link after
-			# convert links from abolute to relative paths:
-			if [[ $line_link =~ /$1/site$site_index/* ]]; then	# page is in same site
-				rel_line_link=$(sed "s/$1\/site[0-9]*/./" <<< "$line_link")
-			else
-				rel_line_link=$(sed "s/$1/../" <<< "$line_link")	
-			fi
-			site_text+="<a href=\"$rel_line_link\">link${link_index}_text</a><br>
+			site_text+="<a href=\"$line_link\">link${link_index}_text</a>
 "
 			echo "    Adding link to $line_link"
 			((link_index ++))
 		done
 		site_text+="$html_footers"
-		echo "$site_text" > "$site_name"	# finally create the file containing the site_text
+		echo "$site_text" > "$1/$site_name"	# finally create the file containing the site_text
 	done
 done
 linked=$(head -n -1 <<< "$linked")		# remove empty last line
