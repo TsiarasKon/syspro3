@@ -213,7 +213,7 @@ int command_handler(int cmdsock) {
         char *timeRunning, *stats_response;
         pthread_mutex_lock(&stats_mutex);
         timeRunning = getTimeRunning(start_time);
-        asprintf(&stats_response, " Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served);
+        asprintf(&stats_response, " Server up for %s, downloaded %d pages, %ld bytes.\n", timeRunning, pages_downloaded, bytes_downloaded);
         pthread_mutex_unlock(&stats_mutex);
         if (write(cmdsock, stats_response, strlen(stats_response) + 1) < 0) {
             perror("Error writing to socket");
@@ -252,6 +252,9 @@ void *crawler_thread(void *args) {
             break;
         }
         printf("Thread %lu: Received %s.\n", self_id, link);
+        // Process link before requesting it:
+        link = strchr(link, '/') + 2;       // skip "http://"
+        link = strchr(link, '/');       // skip link address
         struct sockaddr_in server;
         struct sockaddr *serverptr = (struct sockaddr *) &server;
         struct hostent *hent;
@@ -276,6 +279,7 @@ void *crawler_thread(void *args) {
         char *msg_buf = malloc(BUFSIZ);
         msg_buf[0] = '\0';
         ssize_t bytes_read;
+        int content_pos = 0;
         do {
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(serversock, curr_buf, BUFSIZ);
@@ -286,12 +290,32 @@ void *crawler_thread(void *args) {
             } else if (bytes_read > 0) {
                 msg_buf = realloc(msg_buf, sizeof(msg_buf) + BUFSIZ);
                 strcat(msg_buf, curr_buf);
-                if (endOfRequest(msg_buf)) {       // if double newline was found
+                if ((content_pos = endOfRequest(msg_buf)) != 0) {       // if double newline was found
                     break;
                 }
             }
         } while (bytes_read > 0);
-        printf("%s\n", msg_buf);
+        long content_len = getContentLength(msg_buf);
+        if (content_len < 0) {
+            return (void *) EC_HTTP;
+        }
+        char *content = malloc((size_t) getContentLength(msg_buf) + 1);
+        strcpy(content, msg_buf + content_pos + 1);
+        do {
+            memset(&curr_buf[0], 0, sizeof(curr_buf));
+            bytes_read = read(serversock, curr_buf, BUFSIZ);
+            curr_buf[BUFSIZ - 1] = '\0';
+            if (bytes_read < 0) {
+                perror("Error reading from socket");
+                return (void *) EC_SOCK;
+            } else if (bytes_read > 0) {
+                strcat(content, curr_buf);
+            }
+        } while (bytes_read > 0);
+        printf("%ld\n", strlen(content) + 1);
+        printf("%s\n", content);
+
+        /// Write content to file
 
 //
 //        char *responseString;

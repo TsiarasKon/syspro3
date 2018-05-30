@@ -10,8 +10,9 @@ int validateGETRequest(char *request, char **requested_file);
 char *generateGETRequest(char *filename);
 char *generateResponseString(int response, FILE *fp);
 
-
 int endOfRequest(char const *request);
+long getContentLength(char *request);
+
 char *fileToString(FILE *fp);
 
 #endif

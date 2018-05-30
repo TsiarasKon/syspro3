@@ -87,14 +87,31 @@ char *generateResponseString(int response, FILE *fp) {
     return responseString;
 }
 
-int endOfRequest(char const *request) {      // Search entire request for double newline
-    while (*request != '\0') {
-        if (*request == '\n' && (*(request + 1) == '\n' || (*(request + 1) == '\r' && *(request + 2) == '\n'))) {
-            return 1;
+int endOfRequest(char const *request) {      // Return the index of the second newline, if found
+    int i = 0;
+    while (request[i] != '\0') {
+        if (request[i] == '\n') {
+            if (request[i + 1] == '\n') {
+                return i + 1;
+            } else if ((request[i + 1] == '\r' && request[i + 2] == '\n')) {
+                return i + 2;
+            }
         }
-        request++;
+        i++;
     }
     return 0;
+}
+
+long getContentLength(char *request) {
+    char *curr_line_save;
+    char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
+    while (curr_line != NULL) {
+        if (strlen(curr_line) > 16 && !strncmp(curr_line, "Content-Length: ", 16)) {
+            return atoi(curr_line + 16);
+        }
+        curr_line = strtok_r(NULL, "\r\n", &curr_line_save);
+    }
+    return -1;
 }
 
 

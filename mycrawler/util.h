@@ -7,6 +7,7 @@ enum ErrorCodes {
     EC_MEM,      // Failed to allocate memory
     EC_SOCK,     // Error related to sockets
     EC_THREAD,   // Error related to threads
+    EC_HTTP,     // Violation of the HTTP protocol
     EC_INVALID   // Attempted an invalid operation
 };
 
