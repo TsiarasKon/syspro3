@@ -265,7 +265,6 @@ void *connection_handler(void *args) {
         if (! thread_alive) {     // SHUTDOWN arrived while thread was waiting to acquireFd
             break;
         }
-        printf("Thread %lu: Received a request.\n", self_id);
         long curr_bytes_served = 0;
         char curr_buf[BUFSIZ] = "";
         char *msg_buf = malloc(BUFSIZ);
@@ -294,8 +293,10 @@ void *connection_handler(void *args) {
             return (void *) EC_MEM;
         } else if (rv < 0) {
             responseString = createResponseString(HTTP_BADREQUEST, NULL);
+            printf("Thread %lu: Received a request.\n", self_id);
             printf("Thread %lu: Responded with \"400 Bad Request\".\n", self_id);
         } else {    // valid request
+            printf("Thread %lu: Received a request for \"%s\".\n", self_id, requested_file);
             char *requested_file_path;
             asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
             FILE *fp = fopen(requested_file_path, "r");

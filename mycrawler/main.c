@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include "util.h"
 #include "lists.h"
 #include "requests.h"
@@ -259,7 +260,9 @@ void *crawler_thread(void *args) {
         }
         printf("Thread %lu: Received %s.\n", self_id, link);
         // Process link before requesting it:
-        link = strchr(link, '/') + 2;       // skip "http://"
+        if (strlen(link) > 4 && !strncmp(link, "http", 4)) {      // skip "http://"
+            link = strchr(link, '/') + 2;
+        }
         link = strchr(link, '/');       // skip link address
         struct sockaddr_in server;
         struct sockaddr *serverptr = (struct sockaddr *) &server;
@@ -280,7 +283,6 @@ void *crawler_thread(void *args) {
             perror("Error writing to socket");
             return (void *) EC_SOCK;
         }
-        long curr_bytes_downloaded = 0;
         char curr_buf[BUFSIZ] = "";
         char *msg_buf = malloc(BUFSIZ);
         msg_buf[0] = '\0';
@@ -305,7 +307,7 @@ void *crawler_thread(void *args) {
         if (content_len < 0) {
             return (void *) EC_HTTP;
         }
-        char *content = malloc((size_t) getContentLength(msg_buf) + 1);
+        char *content = malloc((size_t) content_len);
         if (content == NULL) {
             perror("malloc in content");
             return (void *) EC_MEM;
@@ -322,54 +324,33 @@ void *crawler_thread(void *args) {
                 strcat(content, curr_buf);
             }
         } while (bytes_read > 0);
-        printf("%ld\n", strlen(content) + 1);
-        //printf("%s\n", content);
 
-        if (mkdir_path(save_dir, link)) {
+        char link_path[PATH_MAX];
+        if (link[0] == '/') {
+            sprintf(link_path, "%s%s", save_dir, link);
+        } else {
+            sprintf(link_path, "%s/%s", save_dir, link);
+        }
+        char link_path_copy[PATH_MAX];
+        strcpy(link_path_copy, link_path);
+        if (mkdir_path(link_path_copy)) {
             return (void *) EC_DIR;
         }
-        /// Write content to file
 
-//
-//        char *responseString;
-//        char *requested_file;
-//        int rv = validateGETRequest(msg_buf, &requested_file);
-//        if (rv > 0) {    // Fatal Error
-//            return (void *) EC_MEM;
-//        } else if (rv < 0) {
-//            responseString = generateResponseString(HTTP_BADREQUEST, NULL);
-//            printf("Thread %lu: Responded with \"400 Bad Request\".\n", self_id);
-//        } else {    // valid request
-//            char *requested_file_path;
-//            asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
-//            FILE *fp = fopen(requested_file_path, "r");
-//            if (fp == NULL) {       // failed to open file
-//                if (errno == EACCES) {      // failed with "Permission denied"
-//                    responseString = generateResponseString(HTTP_FORBIDDEN, NULL);
-//                    printf("Thread %lu: Responded with \"403 Forbidden\".\n", self_id);
-//                } else {      // file doesn't exist
-//                    responseString = generateResponseString(HTTP_NOTFOUND, NULL);
-//                    printf("Thread %lu: Responded with \"404 Not Found\".\n", self_id);
-//                }
-//            } else {
-//                responseString = generateResponseString(HTTP_OK, fp);
-//                printf("Thread %lu: Responded with \"200 OK\".\n", self_id);
-//                fclose(fp);
-//                curr_bytes_downloaded = strlen(responseString);
-//            }
-//            free(requested_file_path);
-//        }
-//        free(requested_file);
-//        if (write(sock, responseString, strlen(responseString) + 1) < 0) {      /// +1 ?
-//            perror("Error writing to socket");
-//            return (void *) EC_SOCK;
-//        }
-//        free(responseString);
-//        free(msg_buf);
-//        if (curr_bytes_downloaded > 0) {
-//            updateStats(curr_bytes_downloaded);
-//        }
-//        close(sock);
+        FILE *fp = fopen(link_path, "w");
+        if (fp == NULL) {       // failed to open file
+            perror("fopen");
+            return (void *) EC_FILE;
+        }
+        fwrite(content, 1, (size_t) content_len, fp);
+        fclose(fp);
+        printf("Thread %lu: Saved %s to disk.\n", self_id, link);
+
+        free(content);
+        if (content_len > 0) {
+            updateStats(content_len);
+        }
+        close(serversock);
     }
     printf("Thread %lu has exited.\n", self_id);
     return NULL;

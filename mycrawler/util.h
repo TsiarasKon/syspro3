@@ -16,6 +16,6 @@ enum ErrorCodes {
 char* getTimeRunning(struct timeval start_time);
 char* getHTTPDate();
 
-int mkdir_path(char *rootdir, char *link);
+int mkdir_path(char *linkpath);
 
 #endif

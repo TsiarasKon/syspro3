@@ -42,26 +42,17 @@ char* getHTTPDate() {
     return time_str;
 }
 
-int mkdir_path(char *rootdir, char *link) {         // recursively create all directories in link path
+int mkdir_path(char *linkpath) {         // recursively create all directories in link path
     struct stat st = {0};
-    if (stat(rootdir, &st) < 0) {     // if dir doesn't already exist
-        if (mkdir(rootdir, DIRPERMS) < 0) {
-            perror("mkdir");
-            return EC_DIR;
-        }
-    }
     char full_path[PATH_MAX];
-    strcpy(full_path, rootdir);
     char *curr_dir_save;
-    char *curr_dir = strtok_r(link, "/", &curr_dir_save);
-    printf("%s\n", full_path);
+    char *curr_dir = strtok_r(linkpath, "/", &curr_dir_save);
     while (curr_dir != NULL) {
         if (strchr(curr_dir, '.') != NULL) {    // path contains '.' - probably an .html file and not a dir
             break;
         }
-        strcat(full_path, "/");
         strcat(full_path, curr_dir);
-        printf("%s\n", full_path);
+        strcat(full_path, "/");
         if (stat(full_path, &st) < 0) {
             if (mkdir(full_path, DIRPERMS) < 0) {
                 perror("mkdir");
@@ -70,4 +61,5 @@ int mkdir_path(char *rootdir, char *link) {         // recursively create all di
         }
         curr_dir = strtok_r(NULL, "/", &curr_dir_save);
     }
+    return 0;
 }
