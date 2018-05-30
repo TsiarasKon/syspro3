@@ -21,9 +21,10 @@
 #define CMD_LISTEN_QUEUE_SIZE 5
 
 int serversock;
+char *save_dir = NULL;
 char *hostaddr = NULL;
 int server_port = -1;
-char *save_dir = NULL;
+int thread_num = -1;
 
 // Stats:
 struct timeval start_time;
@@ -31,7 +32,8 @@ pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_downloaded = 0;
 long bytes_downloaded = 0;
 
-StringList *linkList;
+StringList *waitingLinkList;
+StringList *visitedLinkList;
 pthread_mutex_t linkList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t linkList_cond;
 int waiting = 0;
@@ -49,13 +51,16 @@ void *crawler_thread(void *args);
 char *acquireLink() {
     pthread_mutex_lock(&linkList_mutex);
     waiting++;
-    while (isStringListEmpty(linkList) && thread_alive) {
+    while (isStringListEmpty(waitingLinkList) && thread_alive && waiting < thread_num) {
         pthread_cond_wait(&linkList_cond, &linkList_mutex);
     }
-    char *link = popStringListNode(linkList);
+    char *link = popStringListNode(waitingLinkList);
     waiting--;
     pthread_mutex_unlock(&linkList_mutex);
-    if (! isStringListEmpty(linkList)) {
+    if (link == NULL) {
+        kill(getpid(), SIGINT);
+    }
+    if (! isStringListEmpty(waitingLinkList)) {
         pthread_cond_broadcast(&linkList_cond);
     }
     return link;
@@ -63,7 +68,7 @@ char *acquireLink() {
 
 void appendToLinkList(StringList **list) {
     pthread_mutex_lock(&linkList_mutex);
-    appendStringList(linkList, list);
+    appendStringList(waitingLinkList, list);
     pthread_mutex_unlock(&linkList_mutex);
     pthread_cond_broadcast(&linkList_cond);
 }
@@ -76,7 +81,6 @@ int main(int argc, char *argv[]) {
         return EC_ARG;
     }
     int command_port = -1;
-    int thread_num = -1;
     char *starting_URL = NULL;
     starting_URL = argv[11];
     int option;
@@ -162,7 +166,8 @@ int main(int argc, char *argv[]) {
         rv = EC_SOCK;
     }
 
-    linkList = createStringList();
+    waitingLinkList = createStringList();
+    visitedLinkList = createStringList();
     StringList *temp = createStringList();
     appendStringListNode(temp, starting_URL);
     appendToLinkList(&temp);
@@ -191,19 +196,15 @@ int main(int argc, char *argv[]) {
         }
     }
     thread_alive = 0;
-//    for (int i = 0; i < thread_num; i++) {      // wake all the threads
-//        pthread_cond_broadcast(&fdList_cond);
-//    }
-//    for (int i = 0; i < thread_num; i++) {      // join with all the threads
-//        pthread_join(pt_ids[i], NULL);
-//    }
-//    pthread_cond_destroy(&fdList_cond);
-//    deleteIntList(&fdList);
-    /// delet this
-    for (int i = 0; i < thread_num; i++) {      // join with all the threads
-        pthread_cancel(pt_ids[i]);
+    for (int i = 0; i < thread_num; i++) {      // wake all the threads
+        pthread_cond_broadcast(&linkList_cond);
     }
-    ///
+    for (int i = 0; i < thread_num; i++) {      // join with all the threads
+        pthread_join(pt_ids[i], NULL);
+    }
+    pthread_cond_destroy(&linkList_cond);
+    deleteStringList(&waitingLinkList);
+    deleteStringList(&visitedLinkList);
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -255,7 +256,7 @@ void *crawler_thread(void *args) {
     printf("Thread %lu created.\n", self_id);
     while (thread_alive) {
         char *link = acquireLink();
-        if (! thread_alive) {     // SHUTDOWN arrived while thread was waiting to acquireLink
+        if (!thread_alive || link == NULL) {     // SHUTDOWN may have arrived while thread was waiting to acquireLink
             break;
         }
         printf("Thread %lu: Received %s.\n", self_id, link);
