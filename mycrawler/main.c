@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <netdb.h>
+#include <sys/stat.h>
 #include "util.h"
 #include "lists.h"
 #include "requests.h"
@@ -197,6 +198,11 @@ int main(int argc, char *argv[]) {
 //    }
 //    pthread_cond_destroy(&fdList_cond);
 //    deleteIntList(&fdList);
+    /// delet this
+    for (int i = 0; i < thread_num; i++) {      // join with all the threads
+        pthread_cancel(pt_ids[i]);
+    }
+    ///
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -300,6 +306,10 @@ void *crawler_thread(void *args) {
             return (void *) EC_HTTP;
         }
         char *content = malloc((size_t) getContentLength(msg_buf) + 1);
+        if (content == NULL) {
+            perror("malloc in content");
+            return (void *) EC_MEM;
+        }
         strcpy(content, msg_buf + content_pos + 1);
         do {
             memset(&curr_buf[0], 0, sizeof(curr_buf));
@@ -313,8 +323,11 @@ void *crawler_thread(void *args) {
             }
         } while (bytes_read > 0);
         printf("%ld\n", strlen(content) + 1);
-        printf("%s\n", content);
+        //printf("%s\n", content);
 
+        if (mkdir_path(save_dir, link)) {
+            return (void *) EC_DIR;
+        }
         /// Write content to file
 
 //

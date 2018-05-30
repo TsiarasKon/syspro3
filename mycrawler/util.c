@@ -3,7 +3,13 @@
 #include <time.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <limits.h>
+#include <errno.h>
 #include "util.h"
+
+#define DIRPERMS (S_IRWXU | S_IRWXG)        // default 0660
 
 const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -34,4 +40,34 @@ char* getHTTPDate() {
     asprintf(&time_str, "Date: %s, %.2d %s %.4d %.2d:%.2d:%.2d GMT", days[t->tm_wday], t->tm_mday, months[t->tm_mon], \
     t->tm_year + 1900, t->tm_hour, t->tm_min, t->tm_sec);
     return time_str;
+}
+
+int mkdir_path(char *rootdir, char *link) {         // recursively create all directories in link path
+    struct stat st = {0};
+    if (stat(rootdir, &st) < 0) {     // if dir doesn't already exist
+        if (mkdir(rootdir, DIRPERMS) < 0) {
+            perror("mkdir");
+            return EC_DIR;
+        }
+    }
+    char full_path[PATH_MAX];
+    strcpy(full_path, rootdir);
+    char *curr_dir_save;
+    char *curr_dir = strtok_r(link, "/", &curr_dir_save);
+    printf("%s\n", full_path);
+    while (curr_dir != NULL) {
+        if (strchr(curr_dir, '.') != NULL) {    // path contains '.' - probably an .html file and not a dir
+            break;
+        }
+        strcat(full_path, "/");
+        strcat(full_path, curr_dir);
+        printf("%s\n", full_path);
+        if (stat(full_path, &st) < 0) {
+            if (mkdir(full_path, DIRPERMS) < 0) {
+                perror("mkdir");
+                return EC_DIR;
+            }
+        }
+        curr_dir = strtok_r(NULL, "/", &curr_dir_save);
+    }
 }

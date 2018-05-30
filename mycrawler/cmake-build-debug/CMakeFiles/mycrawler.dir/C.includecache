@@ -47,6 +47,8 @@ sys/time.h
 -
 netdb.h
 -
+sys/stat.h
+-
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.h
 lists.h
@@ -76,6 +78,14 @@ time.h
 stdlib.h
 -
 sys/time.h
+-
+string.h
+-
+sys/stat.h
+-
+limits.h
+-
+errno.h
 -
 util.h
 /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.h
