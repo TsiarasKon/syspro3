@@ -1,0 +1,6 @@
+./input_files/test
+./input_files/anothertest
+./input_files/small_from_ex1
+./input_files/test2/hey
+
+

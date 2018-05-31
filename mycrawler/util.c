@@ -20,15 +20,15 @@ char* getTimeRunning(struct timeval start_time) {
     gettimeofday(&curr_time, NULL);
     long long msRunning = ((curr_time.tv_sec - start_time.tv_sec) * 1000000LL + curr_time.tv_usec - start_time.tv_usec) / 1000;
     time_t secRunning = msRunning / 1000;
-    struct tm *timeRunning;
-    timeRunning = gmtime(&secRunning);
+    struct tm timeRunning;
+    gmtime_r(&secRunning, &timeRunning);
     char *time_str;
-    if (timeRunning->tm_hour > 0) {
-        asprintf(&time_str, "%.2d:%.2d:%.2d.%.2lld", timeRunning->tm_hour, timeRunning->tm_min, timeRunning->tm_sec, (msRunning % 1000) / 10);
-    } else if (timeRunning->tm_min > 0) {
-        asprintf(&time_str, "%.2d:%.2d.%.2lld", timeRunning->tm_min, timeRunning->tm_sec, (msRunning % 1000) / 10);
+    if (timeRunning.tm_hour > 0) {
+        asprintf(&time_str, "%.2d:%.2d:%.2d.%.2lld", timeRunning.tm_hour, timeRunning.tm_min, timeRunning.tm_sec, (msRunning % 1000) / 10);
+    } else if (timeRunning.tm_min > 0) {
+        asprintf(&time_str, "%.2d:%.2d.%.2lld", timeRunning.tm_min, timeRunning.tm_sec, (msRunning % 1000) / 10);
     } else {
-        asprintf(&time_str, "%.2d.%.2lld", timeRunning->tm_sec, (msRunning % 1000) / 10);
+        asprintf(&time_str, "%.2d.%.2lld", timeRunning.tm_sec, (msRunning % 1000) / 10);
     }
     return time_str;
 }

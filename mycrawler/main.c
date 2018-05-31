@@ -14,16 +14,20 @@
 #include <netdb.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <fcntl.h>
 #include "util.h"
 #include "lists.h"
 #include "requests.h"
 
 #define CMD_LISTEN_QUEUE_SIZE 5
+#define WORKERS_NUM 3
 
 char *save_dir = NULL;
 char *hostaddr = NULL;
 int server_port = -1;
 int thread_num = -1;
+
+pid_t jobExecutor_pid;
 
 // Stats:
 struct timeval start_time;
@@ -31,13 +35,16 @@ pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_downloaded = 0;
 long bytes_downloaded = 0;
 
+// Link Lists:
 StringList *waitingLinkList;
 StringList *visitedLinkList;
 pthread_mutex_t linkList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t linkList_cond;
 int waiting = 0;
 
-pthread_mutex_t dir_creation_mutex = PTHREAD_MUTEX_INITIALIZER;
+// Docfile:
+char docfile[] = "../dirfile.txt";
+pthread_mutex_t docfile_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
@@ -58,10 +65,46 @@ char *acquireLink() {
     char *link = popStringListNode(waitingLinkList);
     waiting--;
     pthread_mutex_unlock(&linkList_mutex);
-    if (link == NULL && thread_alive == 1) {
+    if (link == NULL && thread_alive == 1) {        // downloading complete; instantiate jobExecutor
         thread_alive = 0;
-        printf("Site downloading complete. SEARCH command is now available.\n");
-        kill(getpid(), SIGINT);     ///
+        pthread_cond_broadcast(&linkList_cond);
+        printf(" Site downloading complete. SEARCH command is now available.\n");
+        // Fork and execute jobExecutor from child:
+        //
+        int to_JE[2];
+        int from_JE[2];
+        pipe(to_JE);
+        pipe(from_JE);
+        jobExecutor_pid = fork();
+        if (jobExecutor_pid == 0) {
+            close(to_JE[1]);
+            close(from_JE[0]);
+            char *workers_num;
+            asprintf(&workers_num, "%d", WORKERS_NUM);
+            char *jobExecutor_argv[] = {"jobExecutor", "-d", docfile, "-w", workers_num, NULL};
+            dup2(to_JE[0], STDIN_FILENO);
+            close(to_JE[0]);
+            dup2(from_JE[1], STDOUT_FILENO);
+            close(from_JE[1]);
+///            close(STDERR_FILENO);       // I don't want jobExecutor's stderr in server's output
+            execv("../jobExecutor/jobExecutor", jobExecutor_argv);
+            exit(EC_EXEC);      // Only if execv() failed
+        } else {
+            close(to_JE[0]);
+            close(from_JE[1]);
+            sleep(2);
+            char buffer[BUFSIZ] = "/search curled Amongst Kenobi! -d 0\n";
+            if (write(to_JE[1], buffer, BUFSIZ - 1) == -1) {
+                perror("Error writing to pipe");
+            }
+            printf("jobExecutor:\n");
+            while (read(from_JE[0], buffer, sizeof(buffer)) > 0) {
+                printf(" %s\n", buffer + 17);   // skips newlines and "Type a command:" prompt
+            }
+            perror("Error reading from pipe");
+
+        }
+//        kill(getpid(), SIGINT);     ///
     }
     if (! isStringListEmpty(waitingLinkList)) {
         pthread_cond_broadcast(&linkList_cond);
@@ -151,7 +194,6 @@ int main(int argc, char *argv[]) {
     struct sockaddr *crawlerptr = (struct sockaddr *) &crawler;
     struct sockaddr *commandptr = (struct sockaddr *) &command;
     socklen_t command_len = 0;
-    socklen_t client_len = 0;
 
     // Create sockets:
     int commandsock;
