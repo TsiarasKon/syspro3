@@ -29,6 +29,8 @@ int server_port = -1;
 int thread_num = -1;
 
 pid_t jobExecutor_pid;
+int to_JE[2];
+int from_JE[2];
 
 // Stats:
 struct timeval start_time;
@@ -72,12 +74,13 @@ char *acquireLink() {
         printf(" Site downloading complete. SEARCH command is now available.\n");
         // Fork and execute jobExecutor from child:
         // Communication is done by redirecting jobExecutor's stdin and stdout to pipes
-        int to_JE[2];
-        int from_JE[2];
         pipe(to_JE);
         pipe(from_JE);
         jobExecutor_pid = fork();
-        if (jobExecutor_pid == 0) {
+        if (jobExecutor_pid < 0) {
+            perror("fork");
+            exit(EC_CHILD);
+        } else if (jobExecutor_pid == 0) {
             close(to_JE[1]);
             close(from_JE[0]);
             char *workers_num;
@@ -87,28 +90,14 @@ char *acquireLink() {
             close(to_JE[0]);
             dup2(from_JE[1], STDOUT_FILENO);
             close(from_JE[1]);
-///            close(STDERR_FILENO);       // I don't want jobExecutor's stderr in server's output
+//            close(STDERR_FILENO);       // I don't want jobExecutor's stderr in server's output
             execv("../jobExecutor/jobExecutor", jobExecutor_argv);
-            exit(EC_EXEC);      // Only if execv() failed
+            exit(EC_CHILD);      // Only if execv() failed
         } else {
             close(to_JE[0]);
             close(from_JE[1]);
-            sleep(2);
-            char buffer[BUFSIZ] = "/search curled Amongst Kenobi! -d 0\n";
-            if (write(to_JE[1], buffer, BUFSIZ - 1) == -1) {
-                perror("Error writing to pipe");
-            }
-            printf("jobExecutor:\n");
-            long bytes_read;
-            while ((bytes_read = read(from_JE[0], buffer, sizeof(buffer))) > 0) {
-                printf(" %s\n", buffer + 17);   // skips newlines and "Type a command:" prompt
-            }
-            if (bytes_read < 1) {
-                perror("Error reading from pipe");
-                exit(EC_PIPE);
-            }
         }
-        kill(getpid(), SIGINT);     ///
+//        kill(getpid(), SIGINT);     ///
     }
     if (! isStringListEmpty(waitingLinkList)) {
         pthread_cond_broadcast(&linkList_cond);
@@ -137,6 +126,7 @@ void appendToLinkList(StringList *list) {
 }
 
 int main(int argc, char *argv[]) {
+    signal(SIGPIPE, SIG_IGN);       ///
     gettimeofday(&start_time, NULL);
     if (argc != 12) {
         fprintf(stderr,
@@ -254,9 +244,18 @@ int main(int argc, char *argv[]) {
             crawler_alive = 0;
         }
     }
-    thread_alive = 0;
-    for (int i = 0; i < thread_num; i++) {      // wake all the threads
-        pthread_cond_broadcast(&linkList_cond);
+    if (!thread_alive) {        // threads are already dead and jobExecutor is running
+        if (write(to_JE[1], "/exit\n", 6) == -1) {  ///
+            perror("Server: Error writing to pipe");
+        }
+        close(to_JE[1]);
+        close(from_JE[0]);
+        wait(NULL);
+    } else {
+        thread_alive = 0;
+        for (int i = 0; i < thread_num; i++) {      // signal the threads to terminate
+            pthread_cond_broadcast(&linkList_cond);
+        }
     }
     for (int i = 0; i < thread_num; i++) {      // join with all the threads
         pthread_join(pt_ids[i], NULL);
@@ -264,8 +263,6 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&linkList_cond);
     destroyStringList(&waitingLinkList);
     destroyStringList(&visitedLinkList);
-    kill(jobExecutor_pid, SIGQUIT);
-    wait(NULL);
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -295,7 +292,32 @@ int command_handler(int cmdsock) {
         if (thread_alive) {
             printf("Main thread: SEARCH command cannot be executed right now - Site downloading is still in progress.\n");
         } else {
-            /// TODO: Implement SEARCH
+            char buffer[BUFSIZ] = "/search curled Amongst Kenobi! -d 0\n";
+            if (write(to_JE[1], buffer, strlen(buffer)) == -1) {  ///
+                perror("Server: Error writing to pipe");
+            }
+            printf("jobExecutor:\n");
+            long bytes_read;
+            // write these to socket:
+            while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 1) {
+                buffer[BUFSIZ - 1] = '\0';
+                if (*buffer == '\n' && !strncmp(buffer, "\nType a command:", 16)) {
+                    printf(" %s", buffer + 17);      // skips newlines and "Type a command:" prompt
+                    if (endOfRequest(buffer + 17)) {
+                        break;
+                    }
+                } else {
+                    printf("%s", buffer);
+                    if (endOfRequest(buffer)) {
+                        break;
+                    }
+                }
+            }
+            if (bytes_read < 1) {
+                perror("Server: Error reading from pipe");
+                exit(EC_PIPE);
+            }
+
         }
     } else if (!strcmp(command, "SHUTDOWN")) {
         printf("Main thread: Received SHUTDOWN command ...\n");

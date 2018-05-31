@@ -12,7 +12,7 @@ enum ErrorCodes {
     EC_PIPE,     // Error related to pipes
     EC_SOCK,     // Error related to sockets
     EC_THREAD,   // Error related to threads
-    EC_EXEC,     // Failed to execute jobExecutor
+    EC_CHILD,    // fork() or exec() failed
     EC_INVALID   // Attempted an invalid operation
 };
 
