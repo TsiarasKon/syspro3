@@ -90,7 +90,7 @@ char *acquireLink() {
             close(to_JE[0]);
             dup2(from_JE[1], STDOUT_FILENO);
             close(from_JE[1]);
-//            close(STDERR_FILENO);       // I don't want jobExecutor's stderr in server's output
+///            close(STDERR_FILENO);       // I don't want jobExecutor's stderr in server's output
             execv("../jobExecutor/jobExecutor", jobExecutor_argv);
             exit(EC_CHILD);      // Only if execv() failed
         } else {
@@ -173,7 +173,6 @@ int main(int argc, char *argv[]) {
         return EC_ARG;
     }
 
-    int rv = EC_OK;
 
     // Signal handling for graceful exit on fatal signals:
     struct sigaction act;
@@ -193,7 +192,7 @@ int main(int argc, char *argv[]) {
     int commandsock;
     if ((commandsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
-        rv = EC_SOCK;
+        return EC_SOCK;
     }
     // Setting SO_REUSEADDR so that server can be restarted without bind() failing with "Address already in use"
     int literally_just_one = 1;
@@ -206,13 +205,15 @@ int main(int argc, char *argv[]) {
     crawler.sin_port = htons((uint16_t) command_port);
     if (bind(commandsock, crawlerptr, sizeof(crawler)) < 0) {
         perror("bind");
-        rv = EC_SOCK;
+        return EC_SOCK;
     }
     // Listen for connections to commandsock:
     if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
-        rv = EC_SOCK;
+        return EC_SOCK;
     }
+
+    int rv = EC_OK;
 
     waitingLinkList = createStringList();
     visitedLinkList = createStringList();
@@ -273,7 +274,7 @@ int command_handler(int cmdsock) {
         perror("Error reading from socket");
         return EC_SOCK;
     }
-    strtok(command, "\r\n");
+    strtok(command, "\r\n");            // remove trailing newline
     if (!strcmp(command, "STATS")) {
         printf("Main thread: Received STATS command.\n");
         char *timeRunning, *stats_response;
@@ -288,26 +289,43 @@ int command_handler(int cmdsock) {
         printf("%s", stats_response);
         free(stats_response);
         free(timeRunning);
-    } else if (!strcmp(command, "SEARCH")) {
+    } else if (!strncmp(command, "SEARCH", 6)) {
+        printf("Main thread: Received SEARCH command.\n");
         if (thread_alive) {
-            printf("Main thread: SEARCH command cannot be executed right now - Site downloading is still in progress.\n");
+            char search_response[] = "Main thread: SEARCH command cannot be executed right now - Site downloading is still in progress.\n";
+            if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
+                perror("Error writing to socket");
+                return EC_SOCK;
+            }
         } else {
-            char buffer[BUFSIZ] = "/search curled Amongst Kenobi! -d 0\n";
-            if (write(to_JE[1], buffer, strlen(buffer)) == -1) {  ///
+            if (command[6] != ' ' || command[7] == '\0' || command[7] == ' ' || command[7] == '\n') {
+                fprintf(stderr, " Invalid use of SEARCH command - use as: \"SEARCH word1 word2 ...\"\n");
+            }
+            char search_command[BUFSIZ] = "/search ";
+            strcat(search_command, command + 7);
+            strcat(search_command, " -d 0\n");
+            if (write(to_JE[1], search_command, strlen(search_command)) == -1) {
                 perror("Server: Error writing to pipe");
             }
-            printf("jobExecutor:\n");
+            char buffer[BUFSIZ] = "";
             long bytes_read;
-            // write these to socket:
             while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 1) {
                 buffer[BUFSIZ - 1] = '\0';
-                if (*buffer == '\n' && !strncmp(buffer, "\nType a command:", 16)) {
-                    printf(" %s", buffer + 17);      // skips newlines and "Type a command:" prompt
+                if (*buffer == '\n' && !strncmp(buffer, "\nType a command:", 16)) {     // skips newlines and "Type a command:" prompt
+                    //printf(" %s", buffer + 17);
+                    if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
+                        perror("Error writing to socket");
+                        return EC_SOCK;
+                    }
                     if (endOfRequest(buffer + 17)) {
                         break;
                     }
                 } else {
-                    printf("%s", buffer);
+                    //printf("%s", buffer);
+                    if (write(cmdsock, buffer, strlen(buffer) + 1) < 0) {
+                        perror("Error writing to socket");
+                        return EC_SOCK;
+                    }
                     if (endOfRequest(buffer)) {
                         break;
                     }
