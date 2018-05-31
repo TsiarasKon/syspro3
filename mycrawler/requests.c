@@ -155,6 +155,7 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
                 j++;
                 i++;
             }
+            new_link[j] = '\0';
             appendStringListNode(content_links, new_link);
         }
         i++;

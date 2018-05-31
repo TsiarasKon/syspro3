@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 #include "util.h"
 #include "lists.h"
 #include "requests.h"
@@ -70,7 +71,7 @@ char *acquireLink() {
         pthread_cond_broadcast(&linkList_cond);
         printf(" Site downloading complete. SEARCH command is now available.\n");
         // Fork and execute jobExecutor from child:
-        //
+        // Communication is done by redirecting jobExecutor's stdin and stdout to pipes
         int to_JE[2];
         int from_JE[2];
         pipe(to_JE);
@@ -98,13 +99,16 @@ char *acquireLink() {
                 perror("Error writing to pipe");
             }
             printf("jobExecutor:\n");
-            while (read(from_JE[0], buffer, sizeof(buffer)) > 0) {
+            long bytes_read;
+            while ((bytes_read = read(from_JE[0], buffer, sizeof(buffer))) > 0) {
                 printf(" %s\n", buffer + 17);   // skips newlines and "Type a command:" prompt
             }
-            perror("Error reading from pipe");
-
+            if (bytes_read < 1) {
+                perror("Error reading from pipe");
+                exit(EC_PIPE);
+            }
         }
-//        kill(getpid(), SIGINT);     ///
+        kill(getpid(), SIGINT);     ///
     }
     if (! isStringListEmpty(waitingLinkList)) {
         pthread_cond_broadcast(&linkList_cond);
@@ -224,12 +228,6 @@ int main(int argc, char *argv[]) {
     visitedLinkList = createStringList();
     StringList *temp = createStringList();
     appendStringListNode(temp, starting_URL);
-//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page3_1386.html");
-//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
-//    appendStringListNode(temp, "http://127.0.0.1:9997/site2/page4_8862.html");
     appendToLinkList(temp);
     destroyStringList(&temp);
 
@@ -266,6 +264,8 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&linkList_cond);
     destroyStringList(&waitingLinkList);
     destroyStringList(&visitedLinkList);
+    kill(jobExecutor_pid, SIGQUIT);
+    wait(NULL);
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -321,6 +321,7 @@ void *crawler_thread(void *args) {
     printf("Thread %lu created.\n", self_id);
     while (thread_alive) {
         char *link = acquireLink();
+        char *link_ptr = link;
         if (!thread_alive || link == NULL) {     // SHUTDOWN may have arrived while thread was waiting to acquireLink
             break;
         }
@@ -355,6 +356,7 @@ void *crawler_thread(void *args) {
             perror("Error writing to socket");
             return (void *) EC_SOCK;
         }
+        free(request);
         char curr_buf[BUFSIZ] = "";
         char *msg_buf = malloc(BUFSIZ);
         msg_buf[0] = '\0';
@@ -385,6 +387,7 @@ void *crawler_thread(void *args) {
             return (void *) EC_MEM;
         }
         strcpy(content, msg_buf + content_pos + 1);
+        free(msg_buf);
         do {
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(serversock, curr_buf, BUFSIZ);
@@ -414,6 +417,7 @@ void *crawler_thread(void *args) {
             return (void *) EC_MEM;
         }
         appendToLinkList(content_links);
+        destroyStringList(&content_links);
 
         FILE *fp = fopen(link_path, "w");
         if (fp == NULL) {       // failed to open file
@@ -424,6 +428,7 @@ void *crawler_thread(void *args) {
         fclose(fp);
         printf("Thread %lu: Saved %s to disk.\n", self_id, link);
 
+        free(link_ptr);
         free(content);
         if (content_len > 0) {
             updateStats(content_len);
