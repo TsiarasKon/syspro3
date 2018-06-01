@@ -6,7 +6,7 @@ CC		= gcc
 FLAGS   = -g3 -c -pedantic -std=c99 -Wall
 LIB 	= -lpthread
 
-myhttpd: $(OBJS)
+mycrawler: $(OBJS)
 	$(CC) -g3 $(OBJS) -o $(OUT) $(LIB)
 
 main.o: main.c

@@ -16,12 +16,11 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <ctype.h>
+#include "crawler_globals.h"
 #include "util.h"
 #include "lists.h"
 #include "requests.h"
-
-#define CMD_LISTEN_QUEUE_SIZE 5
-#define WORKERS_NUM 3
 
 char *save_dir = NULL;
 char *hostaddr = NULL;
@@ -45,9 +44,9 @@ pthread_mutex_t linkList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t linkList_cond;
 int waiting = 0;
 
-// Docfile:
-char docfile[] = "../dirfile.txt";
-pthread_mutex_t docfile_mutex = PTHREAD_MUTEX_INITIALIZER;
+// Dirfile:
+char dirfile[] = "../dirfile.txt";
+pthread_mutex_t dirfile_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
@@ -68,12 +67,17 @@ char *acquireLink() {
     char *link = popStringListNode(waitingLinkList);
     waiting--;
     pthread_mutex_unlock(&linkList_mutex);
-    if (link == NULL && thread_alive == 1) {        // downloading complete; instantiate jobExecutor
+    if (link == NULL && thread_alive == 1) {        // crawling complete; instantiate jobExecutor
         thread_alive = 0;
         pthread_cond_broadcast(&linkList_cond);
-        printf(" Site downloading complete. SEARCH command is now available.\n");
+        /* Uncommenting this block would lead to program termination once crawling is complete
+        kill(getpid(), SIGINT);
+        return NULL;
+        */
+        printf(" Site crawling complete. SEARCH command is now available.\n");
         // Fork and execute jobExecutor from child:
         // Communication is done by redirecting jobExecutor's stdin and stdout to pipes
+        signal(SIGPIPE, SIG_IGN);       // Unneeded signal - Pipe errors can be caught in error checking
         pipe(to_JE);
         pipe(from_JE);
         jobExecutor_pid = fork();
@@ -85,19 +89,17 @@ char *acquireLink() {
             close(from_JE[0]);
             char *workers_num;
             asprintf(&workers_num, "%d", WORKERS_NUM);
-            char *jobExecutor_argv[] = {"jobExecutor", "-d", docfile, "-w", workers_num, NULL};
+            char *jobExecutor_argv[] = {"jobExecutor", "-d", dirfile, "-w", workers_num, NULL};
             dup2(to_JE[0], STDIN_FILENO);
             close(to_JE[0]);
             dup2(from_JE[1], STDOUT_FILENO);
             close(from_JE[1]);
-///            close(STDERR_FILENO);       // I don't want jobExecutor's stderr in server's output
             execv("../jobExecutor/jobExecutor", jobExecutor_argv);
             exit(EC_CHILD);      // Only if execv() failed
         } else {
             close(to_JE[0]);
             close(from_JE[1]);
         }
-//        kill(getpid(), SIGINT);     ///
     }
     if (! isStringListEmpty(waitingLinkList)) {
         pthread_cond_broadcast(&linkList_cond);
@@ -126,7 +128,6 @@ void appendToLinkList(StringList *list) {
 }
 
 int main(int argc, char *argv[]) {
-    signal(SIGPIPE, SIG_IGN);       ///
     gettimeofday(&start_time, NULL);
     if (argc != 12) {
         fprintf(stderr,
@@ -159,7 +160,7 @@ int main(int argc, char *argv[]) {
                 save_dir = argv[optind];
                 break;
             default:
-                fprintf(stderr, "Invalid arguments. Please run \"$ ./jobExecutor -d docfile -w numWorkers\"\n");
+                fprintf(stderr, "Invalid arguments. Please run \"$ ./jobExecutor -d dirfile -w numWorkers\"\n");
                 return EC_ARG;
         }
     }
@@ -213,14 +214,19 @@ int main(int argc, char *argv[]) {
         return EC_SOCK;
     }
 
+    struct stat st = {0};
+    if (!stat(dirfile, &st)) {      // dirfile already exists
+        remove(dirfile);
+    }
+
     int rv = EC_OK;
 
     waitingLinkList = createStringList();
     visitedLinkList = createStringList();
-    StringList *temp = createStringList();
-    appendStringListNode(temp, starting_URL);
-    appendToLinkList(temp);
-    destroyStringList(&temp);
+    StringList *startingLink = createStringList();
+    appendStringListNode(startingLink, starting_URL);
+    appendToLinkList(startingLink);
+    destroyStringList(&startingLink);
 
     pthread_cond_init(&linkList_cond, NULL);
     pthread_t pt_ids[thread_num];
@@ -292,15 +298,18 @@ int command_handler(int cmdsock) {
     } else if (!strncmp(command, "SEARCH", 6)) {
         printf("Main thread: Received SEARCH command.\n");
         if (thread_alive) {
-            char search_response[] = "Main thread: SEARCH command cannot be executed right now - Site downloading is still in progress.\n";
+            char search_response[] = "Main thread: SEARCH command cannot be executed right now - Site crawling is still in progress.\n";
+            if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
+                perror("Error writing to socket");
+                return EC_SOCK;
+            }
+        } else if (strlen(command) < 8 || isspace(command[7])) {       // No arguments given
+            char search_response[] = " Invalid use of SEARCH command - use as: \"SEARCH word1 word2 ...\"\n";
             if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
                 perror("Error writing to socket");
                 return EC_SOCK;
             }
         } else {
-            if (command[6] != ' ' || command[7] == '\0' || command[7] == ' ' || command[7] == '\n') {
-                fprintf(stderr, " Invalid use of SEARCH command - use as: \"SEARCH word1 word2 ...\"\n");
-            }
             char search_command[BUFSIZ] = "/search ";
             strcat(search_command, command + 7);
             strcat(search_command, " -d 0\n");
@@ -311,7 +320,8 @@ int command_handler(int cmdsock) {
             long bytes_read;
             while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 1) {
                 buffer[BUFSIZ - 1] = '\0';
-                if (*buffer == '\n' && !strncmp(buffer, "\nType a command:", 16)) {     // skips newlines and "Type a command:" prompt
+                if (*buffer == '\n' &&
+                    !strncmp(buffer, "\nType a command:", 16)) {     // skips newlines and "Type a command:" prompt
                     //printf(" %s", buffer + 17);
                     if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
                         perror("Error writing to socket");
@@ -335,7 +345,6 @@ int command_handler(int cmdsock) {
                 perror("Server: Error reading from pipe");
                 exit(EC_PIPE);
             }
-
         }
     } else if (!strcmp(command, "SHUTDOWN")) {
         printf("Main thread: Received SHUTDOWN command ...\n");

@@ -84,6 +84,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/crawler_globals.h">
+			<Option target="mycrawler"/>
+		</Unit>
 		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.c">
 			<Option target="mycrawler"/>
 		</Unit>

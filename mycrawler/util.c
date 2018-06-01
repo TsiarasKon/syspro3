@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <pthread.h>
+#include "crawler_globals.h"
 #include "util.h"
 
 #define DIRPERMS (S_IRWXU | S_IRWXG)        // default 0660
@@ -59,6 +60,12 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
                 perror("mkdir");
                 return EC_DIR;
             }
+            pthread_mutex_lock(&dirfile_mutex);
+            printf("\t|%s|\n\t\t|%s|\n", dirfile, full_path);
+            FILE *dirfp = fopen(dirfile, "a");
+            fprintf(dirfp, "%s\n", full_path);
+            fclose(dirfp);
+            pthread_mutex_unlock(&dirfile_mutex);
         }
         curr_dir = strtok_r(NULL, "/", &curr_dir_save);
     }
