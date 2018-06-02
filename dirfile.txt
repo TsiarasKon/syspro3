@@ -1,3 +1,0 @@
-myWWWcopy/site1/
-myWWWcopy/site2/
-myWWWcopy/site0/

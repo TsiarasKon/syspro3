@@ -45,7 +45,7 @@ pthread_cond_t linkList_cond;
 int waiting = 0;
 
 // Dirfile:
-char dirfile[] = "../dirfile.txt";
+char dirfile[] = "./dirfile.txt";
 pthread_mutex_t dirfile_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 volatile int thread_alive = 1;
@@ -318,17 +318,19 @@ int command_handler(int cmdsock) {
             }
             char buffer[BUFSIZ] = "";
             long bytes_read;
-            while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 1) {
+            while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 0) {
+                if (*buffer == '<') {
+                    break;
+                }
+                if (strlen(buffer) < 2) {
+                    continue;
+                }
                 buffer[BUFSIZ - 1] = '\0';
-                if (*buffer == '\n' &&
-                    !strncmp(buffer, "\nType a command:", 16)) {     // skips newlines and "Type a command:" prompt
+                if (!strncmp(buffer, "\nType a command:\n", 17)) {     // skips newlines and "Type a command:" prompt
                     //printf(" %s", buffer + 17);
                     if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
                         perror("Error writing to socket");
                         return EC_SOCK;
-                    }
-                    if (endOfRequest(buffer + 17)) {
-                        break;
                     }
                 } else {
                     //printf("%s", buffer);
@@ -336,11 +338,9 @@ int command_handler(int cmdsock) {
                         perror("Error writing to socket");
                         return EC_SOCK;
                     }
-                    if (endOfRequest(buffer)) {
-                        break;
-                    }
                 }
             }
+
             if (bytes_read < 1) {
                 perror("Server: Error reading from pipe");
                 exit(EC_PIPE);
