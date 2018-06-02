@@ -53,32 +53,30 @@ const char conn[] = "Connection: Closed";
 
 char *generateResponseString(int response, FILE *fp) {
     char *date = getHTTPDate();
-    char *header, *cont_len, *content;
+    char *header, *content;
     switch (response) {
         case HTTP_OK:
             asprintf(&header, "HTTP/1.1 200 OK");
             content = fileToString(fp);
-            asprintf(&cont_len, "Content-Length: %ld", strlen(content));     ///
             break;
         case HTTP_BADREQUEST:
             asprintf(&header, "HTTP/1.1 400 Bad Request");
             asprintf(&content, "<html>Your request was bad and you should feel bad.</html>");
-            asprintf(&cont_len, "Content-Length: %ld", strlen(content));
             break;
         case HTTP_FORBIDDEN:
             asprintf(&header, "HTTP/1.1 403 Forbidden");
             asprintf(&content, "<html>You have no power here! No permissions, that is.</html>");
-            asprintf(&cont_len, "Content-Length: %ld", strlen(content));
             break;
         case HTTP_NOTFOUND:
             asprintf(&header, "HTTP/1.1 404 Not Found");
             asprintf(&content, "<html>Your file is in another castle. Or directory. Not sure.</html>");
-            asprintf(&cont_len, "Content-Length: %ld", strlen(content));
             break;
         default:        // should never get here
             free(date);
             return NULL;
     }
+    char *cont_len;
+    asprintf(&cont_len, "Content-Length: %ld", strlen(content));
     char *responseString;
     asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header, date, server, cont_len, cont_type, conn, content);
     free(date);

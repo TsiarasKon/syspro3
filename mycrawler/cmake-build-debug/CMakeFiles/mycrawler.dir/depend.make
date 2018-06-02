@@ -5,6 +5,7 @@ CMakeFiles/mycrawler.dir/lists.c.o: ../lists.c
 CMakeFiles/mycrawler.dir/lists.c.o: ../lists.h
 CMakeFiles/mycrawler.dir/lists.c.o: ../util.h
 
+CMakeFiles/mycrawler.dir/main.c.o: ../crawler_globals.h
 CMakeFiles/mycrawler.dir/main.c.o: ../lists.h
 CMakeFiles/mycrawler.dir/main.c.o: ../main.c
 CMakeFiles/mycrawler.dir/main.c.o: ../requests.h
@@ -15,6 +16,8 @@ CMakeFiles/mycrawler.dir/requests.c.o: ../requests.c
 CMakeFiles/mycrawler.dir/requests.c.o: ../requests.h
 CMakeFiles/mycrawler.dir/requests.c.o: ../util.h
 
+CMakeFiles/mycrawler.dir/util.c.o: ../crawler_globals.h
+CMakeFiles/mycrawler.dir/util.c.o: ../lists.h
 CMakeFiles/mycrawler.dir/util.c.o: ../util.c
 CMakeFiles/mycrawler.dir/util.c.o: ../util.h
 

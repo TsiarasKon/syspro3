@@ -61,13 +61,13 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
                 return EC_DIR;
             }
         }
-        // Append dir path to dirfile:
-        pthread_mutex_lock(&dirfile_mutex);
-        FILE *dirfp = fopen(dirfile, "a");
-        fprintf(dirfp, "../mycrawler/%s\n", full_path);
-        fclose(dirfp);
-        pthread_mutex_unlock(&dirfile_mutex);
         curr_dir = strtok_r(NULL, "/", &curr_dir_save);
     }
+    // Append full dir path to dirfile:
+    pthread_mutex_lock(&dirfile_mutex);
+    if (!existsInStringList(dirfileList, full_path)) {
+        appendStringListNode(dirfileList, full_path);
+    }
+    pthread_mutex_unlock(&dirfile_mutex);
     return 0;
 }

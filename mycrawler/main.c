@@ -46,6 +46,7 @@ int waiting = 0;
 
 // Dirfile:
 char dirfile[] = "./dirfile.txt";
+StringList *dirfileList;
 pthread_mutex_t dirfile_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 volatile int thread_alive = 1;
@@ -76,6 +77,15 @@ char *acquireLink() {
         */
         printf(" Site crawling complete. SEARCH command is now available.\n");
         // Fork and execute jobExecutor from child:
+        // Creating dirfile that will be passed as an argument to jobExecutor:
+        FILE *dirfp = fopen(dirfile, "w");
+        // At this point all threads will have finished, no need dirfileList to access via mutex
+        StringListNode *current = dirfileList->first;
+        while (current != NULL) {
+            fprintf(dirfp, "../mycrawler/%s\n", current->string);
+            current = current->next;
+        }
+        fclose(dirfp);
         // Communication is done by redirecting jobExecutor's stdin and stdout to pipes
         signal(SIGPIPE, SIG_IGN);       // Unneeded signal - Pipe errors can be caught in error checking
         pipe(to_JE);
@@ -218,6 +228,20 @@ int main(int argc, char *argv[]) {
     if (!stat(dirfile, &st)) {      // dirfile already exists
         remove(dirfile);
     }
+    if (!stat(save_dir, &st)) {      // save_dir already exists
+        printf("save_dir '%s' already exists. Renaming it ...\n", save_dir);
+        int i = 0;
+        char old_save_dir[PATH_MAX];
+        do {
+            sprintf(old_save_dir, "%s_ver%d", save_dir, i);
+            i++;
+        } while (!stat(old_save_dir, &st));
+        if (rename(save_dir, old_save_dir) < 0) {
+            printf("Failed to rename existing save_dir. It will be overwritten by this program.\n");
+        } else {
+            printf("Old save_dir successfully renamed to '%s'.\n", old_save_dir);
+        }
+    }
 
     int rv = EC_OK;
 
@@ -227,6 +251,7 @@ int main(int argc, char *argv[]) {
     appendStringListNode(startingLink, starting_URL);
     appendToLinkList(startingLink);
     destroyStringList(&startingLink);
+    dirfileList = createStringList();
 
     pthread_cond_init(&linkList_cond, NULL);
     pthread_t pt_ids[thread_num];
@@ -270,6 +295,7 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&linkList_cond);
     destroyStringList(&waitingLinkList);
     destroyStringList(&visitedLinkList);
+    destroyStringList(&dirfileList);
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -315,17 +341,18 @@ int command_handler(int cmdsock) {
             strcat(search_command, " -d 0\n");
             if (write(to_JE[1], search_command, strlen(search_command)) == -1) {
                 perror("Server: Error writing to pipe");
+                return EC_PIPE;
             }
             char buffer[BUFSIZ] = "";
-            long bytes_read;
+            long bytes_read = 0;
             while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 0) {
                 if (*buffer == '<') {
                     break;
                 }
-                if (strlen(buffer) < 2) {
+                if (strlen(buffer) < 2) {       // skip '\n' lines
                     continue;
                 }
-                buffer[BUFSIZ - 1] = '\0';
+                buffer[bytes_read + 1] = '\0';
                 if (!strncmp(buffer, "\nType a command:\n", 17)) {     // skips newlines and "Type a command:" prompt
                     //printf(" %s", buffer + 17);
                     if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
@@ -339,9 +366,11 @@ int command_handler(int cmdsock) {
                         return EC_SOCK;
                     }
                 }
+//                if (strchr(buffer, '<') != NULL) {      // Last resort, in case we previously missed '<'
+//                    break;
+//                }
             }
-
-            if (bytes_read < 1) {
+            if (bytes_read < 0) {
                 perror("Server: Error reading from pipe");
                 exit(EC_PIPE);
             }
