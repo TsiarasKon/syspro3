@@ -28,8 +28,8 @@
       <file leaf-file-name="main.c" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="582">
-              <caret line="368" column="0" lean-forward="false" selection-start-line="368" selection-start-column="2" selection-end-line="370" selection-end-column="19" />
+            <state relative-caret-position="438">
+              <caret line="354" column="33" lean-forward="false" selection-start-line="354" selection-start-column="33" selection-end-line="354" selection-end-column="33" />
               <folding>
                 <element signature="e#53#71#0" expanded="true" />
               </folding>
@@ -90,8 +90,8 @@
       <file leaf-file-name="main.c" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../jobExecutor/main.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="128">
-              <caret line="432" column="27" lean-forward="false" selection-start-line="432" selection-start-column="27" selection-end-line="432" selection-end-column="27" />
+            <state relative-caret-position="-790">
+              <caret line="459" column="24" lean-forward="false" selection-start-line="459" selection-start-column="24" selection-end-line="459" selection-end-column="24" />
               <folding>
                 <element signature="e#45#63#0" expanded="true" />
               </folding>
@@ -99,10 +99,20 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="worker.c" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../jobExecutor/worker.c">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="527">
+              <caret line="150" column="37" lean-forward="false" selection-start-line="150" selection-start-column="37" selection-end-line="150" selection-end-column="37" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="util.c" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../jobExecutor/util.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="189">
+            <state relative-caret-position="217">
               <caret line="39" column="0" lean-forward="false" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
@@ -137,13 +147,13 @@
         <option value="$PROJECT_DIR$/lists.c" />
         <option value="$PROJECT_DIR$/requests.h" />
         <option value="$PROJECT_DIR$/util.h" />
-        <option value="$PROJECT_DIR$/../jobExecutor/worker.c" />
         <option value="$PROJECT_DIR$/../jobExecutor/util.c" />
         <option value="$PROJECT_DIR$/../jobExecutor/util.h" />
         <option value="$PROJECT_DIR$/crawler_globals.h" />
         <option value="$PROJECT_DIR$/util.c" />
-        <option value="$PROJECT_DIR$/../jobExecutor/main.c" />
         <option value="$PROJECT_DIR$/requests.c" />
+        <option value="$PROJECT_DIR$/../jobExecutor/worker.c" />
+        <option value="$PROJECT_DIR$/../jobExecutor/main.c" />
         <option value="$PROJECT_DIR$/main.c" />
       </list>
     </option>
@@ -154,11 +164,11 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="4">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="992" />
-    <option name="y" value="24" />
+    <option name="y" value="-4" />
     <option name="width" value="928" />
-    <option name="height" value="1056" />
+    <option name="height" value="1084" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -235,15 +245,15 @@
       <workItem from="1527780884214" duration="12365000" />
       <workItem from="1527843071690" duration="12849000" />
       <workItem from="1527870449847" duration="598000" />
-      <workItem from="1527926670067" duration="5478000" />
+      <workItem from="1527926670067" duration="8458000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="91134000" />
+    <option name="totallyTimeSpent" value="94114000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="992" y="24" width="928" height="1056" extended-state="4" />
+    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2299613" sideWeight="0.42888403" order="1" side_tool="false" content_ui="combo" />
@@ -609,13 +619,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../jobExecutor/worker.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="257">
-          <caret line="123" column="31" lean-forward="false" selection-start-line="123" selection-start-column="31" selection-end-line="123" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../jobExecutor/util.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
@@ -624,31 +627,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../jobExecutor/util.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="189">
-          <caret line="39" column="0" lean-forward="false" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/crawler_globals.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="36">
           <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../jobExecutor/main.c">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="128">
-          <caret line="432" column="27" lean-forward="false" selection-start-line="432" selection-start-column="27" selection-end-line="432" selection-end-column="27" />
-          <folding>
-            <element signature="e#45#63#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -676,10 +659,38 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../jobExecutor/util.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="217">
+          <caret line="39" column="0" lean-forward="false" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../jobExecutor/worker.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="527">
+          <caret line="150" column="37" lean-forward="false" selection-start-line="150" selection-start-column="37" selection-end-line="150" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../jobExecutor/main.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-790">
+          <caret line="459" column="24" lean-forward="false" selection-start-line="459" selection-start-column="24" selection-end-line="459" selection-end-column="24" />
+          <folding>
+            <element signature="e#45#63#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="582">
-          <caret line="368" column="0" lean-forward="false" selection-start-line="368" selection-start-column="2" selection-end-line="370" selection-end-column="19" />
+        <state relative-caret-position="438">
+          <caret line="354" column="33" lean-forward="false" selection-start-line="354" selection-start-column="33" selection-end-line="354" selection-end-column="33" />
           <folding>
             <element signature="e#53#71#0" expanded="true" />
           </folding>

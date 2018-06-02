@@ -346,13 +346,13 @@ int command_handler(int cmdsock) {
             char buffer[BUFSIZ] = "";
             long bytes_read = 0;
             while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 0) {
-                if (*buffer == '<') {
+                if (!strcmp(buffer, "<")) {
                     break;
                 }
                 if (strlen(buffer) < 2) {       // skip '\n' lines
                     continue;
                 }
-                buffer[bytes_read + 1] = '\0';
+                buffer[bytes_read] = '\0';
                 if (!strncmp(buffer, "\nType a command:\n", 17)) {     // skips newlines and "Type a command:" prompt
                     //printf(" %s", buffer + 17);
                     if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
@@ -366,9 +366,9 @@ int command_handler(int cmdsock) {
                         return EC_SOCK;
                     }
                 }
-//                if (strchr(buffer, '<') != NULL) {      // Last resort, in case we previously missed '<'
-//                    break;
-//                }
+                if (strchr(buffer, '<') != NULL) {      // Last resort, in case we previously missed '<'
+                    break;
+                }
             }
             if (bytes_read < 0) {
                 perror("Server: Error reading from pipe");

@@ -120,6 +120,7 @@ int worker(int w_id) {
             }
             rewind(fp);
             int line_len;
+            char *tagfreeBuffer, *tagfreeBufferptr;
             for (int curr_line = 0; curr_line < lines_num; curr_line++) {
                 if (getline(&buffer, &bufsize, fp) == -1) {
                     perror("Error");
@@ -127,16 +128,18 @@ int worker(int w_id) {
                 }
                 bufferptr = buffer;
                 strtok(buffer, "\r\n");
-                line_len = (int) strlen(buffer);
+                tagfreeBuffer = ignoreHTMLTags(buffer);
+                tagfreeBufferptr = tagfreeBuffer;
+                line_len = (int) strlen(tagfreeBuffer);
                 docs[curr_doc][curr_line] = malloc((size_t) line_len + 1);
                 total_chars += line_len;
                 if (docs[curr_doc][curr_line] == NULL) {
                     perror("malloc");
                     return EC_MEM;
                 }
-                strcpy(docs[curr_doc][curr_line], buffer);
+                strcpy(docs[curr_doc][curr_line], tagfreeBuffer);
                 // insert line's words to trie
-                word = strtok(buffer, " \t");     // get first word
+                word = strtok(tagfreeBuffer, " \t");     // get first word
                 while (word != NULL) {          // for every word in doc
                     total_words += 1;
                     exit_code = insert(trie, word, curr_doc, curr_line);
@@ -145,6 +148,7 @@ int worker(int w_id) {
                     }
                     word = strtok(NULL, " \t");
                 }
+                free(tagfreeBufferptr);
                 buffer = bufferptr;
             }
             fclose(fp);

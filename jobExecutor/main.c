@@ -441,8 +441,6 @@ int main(int argc, char *argv[]) {
             if (!results) {
                 printf("The given word(s) could not be found in any of the searched docs.\n");
 				fflush(stdout);
-                printf("<");
-                fflush(stdout);
                 for (w_id = 0; w_id < w; w_id++) {
                     deleteStringList(&worker_results[w_id]);
                 }
