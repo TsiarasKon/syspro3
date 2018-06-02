@@ -8,22 +8,22 @@ FLAGS   = -g3 -c -pedantic -std=c99 -Wall
 $(OUT): $(OBJS)
 	$(CC) -g3 $(OBJS) -o $@
 
-main.o: main.c
+main.o: main.c $(HEADER)
 	$(CC) $(FLAGS) main.c
 
-worker.o: worker.c
+worker.o: worker.c $(HEADER)
 	$(CC) $(FLAGS) worker.c
 
-postinglist.o: postinglist.c
+postinglist.o: postinglist.c $(HEADER)
 	$(CC) $(FLAGS) postinglist.c
 
-trie.o: trie.c
+trie.o: trie.c $(HEADER)
 	$(CC) $(FLAGS) trie.c
 
-lists.o: lists.c
+lists.o: lists.c $(HEADER)
 	$(CC) $(FLAGS) lists.c
 
-util.o: util.c
+util.o: util.c $(HEADER)
 	$(CC) $(FLAGS) util.c
 
 

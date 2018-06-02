@@ -6,7 +6,6 @@
 #include <time.h>
 #include <netinet/in.h>
 #include <pthread.h>
-#include <poll.h>
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <errno.h>
@@ -14,14 +13,17 @@
 #include <netdb.h>
 #include <sys/stat.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <sys/wait.h>
 #include <ctype.h>
-#include "crawler_globals.h"
 #include "util.h"
 #include "lists.h"
 #include "requests.h"
 
+#define CMD_LISTEN_QUEUE_SIZE 5
+#define WORKERS_NUM 5
+#define DIRPERMS (S_IRWXU | S_IRWXG)        // default 0660
+
+// Needed global variables:
 char *save_dir = NULL;
 char *hostaddr = NULL;
 int server_port = -1;
@@ -49,92 +51,18 @@ char dirfile[] = "./dirfile.txt";
 StringList *dirfileList;
 pthread_mutex_t dirfile_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Function prototypes:
+char *acquireLink();
+void appendToLinkList(StringList *list);
+int command_handler(int cmdsock);
+void *crawler_thread(void *args);
+int mkdir_path(char *linkpath);
+
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
 
 void crawler_killer(int signum) {
     crawler_alive = 0;
-}
-
-int command_handler(int cmdsock);
-void *crawler_thread(void *args);
-
-char *acquireLink() {
-    pthread_mutex_lock(&linkList_mutex);
-    waiting++;
-    while (isStringListEmpty(waitingLinkList) && thread_alive && waiting < thread_num) {
-        pthread_cond_wait(&linkList_cond, &linkList_mutex);
-    }
-    char *link = popStringListNode(waitingLinkList);
-    waiting--;
-    pthread_mutex_unlock(&linkList_mutex);
-    if (link == NULL && thread_alive == 1) {        // crawling complete; instantiate jobExecutor
-        thread_alive = 0;
-        pthread_cond_broadcast(&linkList_cond);
-        /* Uncommenting this block would lead to program termination once crawling is complete
-        kill(getpid(), SIGINT);
-        return NULL;
-        */
-        printf(" Site crawling complete. SEARCH command is now available.\n");
-        // Fork and execute jobExecutor from child:
-        // Creating dirfile that will be passed as an argument to jobExecutor:
-        FILE *dirfp = fopen(dirfile, "w");
-        // At this point all threads will have finished, no need dirfileList to access via mutex
-        StringListNode *current = dirfileList->first;
-        while (current != NULL) {
-            fprintf(dirfp, "../mycrawler/%s\n", current->string);
-            current = current->next;
-        }
-        fclose(dirfp);
-        // Communication is done by redirecting jobExecutor's stdin and stdout to pipes
-        signal(SIGPIPE, SIG_IGN);       // Unneeded signal - Pipe errors can be caught in error checking
-        pipe(to_JE);
-        pipe(from_JE);
-        jobExecutor_pid = fork();
-        if (jobExecutor_pid < 0) {
-            perror("fork");
-            exit(EC_CHILD);
-        } else if (jobExecutor_pid == 0) {
-            close(to_JE[1]);
-            close(from_JE[0]);
-            char *workers_num;
-            asprintf(&workers_num, "%d", WORKERS_NUM);
-            char *jobExecutor_argv[] = {"jobExecutor", "-d", dirfile, "-w", workers_num, NULL};
-            dup2(to_JE[0], STDIN_FILENO);
-            close(to_JE[0]);
-            dup2(from_JE[1], STDOUT_FILENO);
-            close(from_JE[1]);
-            execv("../jobExecutor/jobExecutor", jobExecutor_argv);
-            exit(EC_CHILD);      // Only if execv() failed
-        } else {
-            close(to_JE[0]);
-            close(from_JE[1]);
-        }
-    }
-    if (! isStringListEmpty(waitingLinkList)) {
-        pthread_cond_broadcast(&linkList_cond);
-    }
-    return link;
-}
-
-void appendToLinkList(StringList *list) {
-    int newLinks = 0;
-    StringListNode *current = list->first;
-    pthread_mutex_lock(&linkList_mutex);
-    while (current != NULL) {
-        if (existsInStringList(visitedLinkList, current->string)) {     // link has already been processed
-            current = current->next;
-            continue;
-        }
-        newLinks = 1;
-        appendStringListNode(waitingLinkList, current->string);
-        appendStringListNode(visitedLinkList, current->string);
-        current = current->next;
-    }
-    pthread_mutex_unlock(&linkList_mutex);
-    if (newLinks) {
-        pthread_cond_broadcast(&linkList_cond);
-    }
 }
 
 int main(int argc, char *argv[]) {
@@ -300,6 +228,84 @@ int main(int argc, char *argv[]) {
     return rv;
 }
 
+char *acquireLink() {
+    pthread_mutex_lock(&linkList_mutex);
+    waiting++;
+    while (isStringListEmpty(waitingLinkList) && thread_alive && waiting < thread_num) {
+        pthread_cond_wait(&linkList_cond, &linkList_mutex);
+    }
+    char *link = popStringListNode(waitingLinkList);
+    waiting--;
+    pthread_mutex_unlock(&linkList_mutex);
+    if (link == NULL && thread_alive == 1) {        // crawling complete; instantiate jobExecutor
+        thread_alive = 0;
+        pthread_cond_broadcast(&linkList_cond);
+        /* Uncommenting this block would lead to program termination once crawling is complete
+        kill(getpid(), SIGINT);
+        return NULL;
+        */
+        printf(" Site crawling complete. SEARCH command is now available.\n");
+        // Fork and execute jobExecutor from child:
+        // Creating dirfile that will be passed as an argument to jobExecutor:
+        FILE *dirfp = fopen(dirfile, "w");
+        // At this point all threads will have finished, no need to access dirfileList via mutex
+        StringListNode *current = dirfileList->first;
+        while (current != NULL) {
+            fprintf(dirfp, "../mycrawler/%s\n", current->string);
+            current = current->next;
+        }
+        fclose(dirfp);
+        // Communication is done by redirecting jobExecutor's stdin and stdout to pipes
+        signal(SIGPIPE, SIG_IGN);       // Unneeded signal - Pipe errors can be caught in error checking
+        pipe(to_JE);
+        pipe(from_JE);
+        jobExecutor_pid = fork();
+        if (jobExecutor_pid < 0) {
+            perror("fork");
+            exit(EC_CHILD);
+        } else if (jobExecutor_pid == 0) {
+            close(to_JE[1]);
+            close(from_JE[0]);
+            char *workers_num;
+            asprintf(&workers_num, "%d", WORKERS_NUM);
+            char *jobExecutor_argv[] = {"jobExecutor", "-d", dirfile, "-w", workers_num, NULL};
+            dup2(to_JE[0], STDIN_FILENO);
+            close(to_JE[0]);
+            dup2(from_JE[1], STDOUT_FILENO);
+            close(from_JE[1]);
+            execv("../jobExecutor/jobExecutor", jobExecutor_argv);
+            exit(EC_CHILD);      // Only if execv() failed
+        } else {
+            close(to_JE[0]);
+            close(from_JE[1]);
+        }
+    }
+    if (! isStringListEmpty(waitingLinkList)) {
+        pthread_cond_broadcast(&linkList_cond);
+    }
+    return link;
+}
+
+void appendToLinkList(StringList *list) {
+    int newLinks = 0;
+    StringListNode *current = list->first;
+    pthread_mutex_lock(&linkList_mutex);
+    while (current != NULL) {
+        if (existsInStringList(visitedLinkList, current->string)) {     // link has already been processed
+            current = current->next;
+            continue;
+        }
+        newLinks = 1;
+        appendStringListNode(waitingLinkList, current->string);
+        appendStringListNode(visitedLinkList, current->string);
+        current = current->next;
+    }
+    pthread_mutex_unlock(&linkList_mutex);
+    if (newLinks) {
+        pthread_cond_broadcast(&linkList_cond);
+    }
+}
+
 int command_handler(int cmdsock) {
     char command[BUFSIZ];        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
@@ -345,14 +351,20 @@ int command_handler(int cmdsock) {
             }
             char buffer[BUFSIZ] = "";
             long bytes_read = 0;
-            while ((bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 0) {
+            int message_end = 0;
+            while (!message_end && (bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 0) {
                 if (!strcmp(buffer, "<")) {
                     break;
                 }
                 if (strlen(buffer) < 2) {       // skip '\n' lines
                     continue;
                 }
-                buffer[bytes_read] = '\0';
+                if (buffer[bytes_read - 1] == '<') {
+                    buffer[bytes_read - 1] = '\0';
+                    message_end = 1;
+                } else {
+                    buffer[bytes_read] = '\0';
+                }
                 if (!strncmp(buffer, "\nType a command:\n", 17)) {     // skips newlines and "Type a command:" prompt
                     //printf(" %s", buffer + 17);
                     if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
@@ -366,7 +378,7 @@ int command_handler(int cmdsock) {
                         return EC_SOCK;
                     }
                 }
-                if (strchr(buffer, '<') != NULL) {      // Last resort, in case we previously missed '<'
+                if (strchr(buffer, '<') != NULL) {      // Shouldn't be needed: Last resort, in case we previously missed '<'
                     break;
                 }
             }
@@ -515,4 +527,32 @@ void *crawler_thread(void *args) {
     }
     printf("Thread %lu has exited.\n", self_id);
     return NULL;
+}
+
+int mkdir_path(char *linkpath) {         // recursively create all directories in link path
+    struct stat st = {0};
+    char full_path[PATH_MAX] = "";
+    char *curr_dir_save = NULL;
+    char *curr_dir = strtok_r(linkpath, "/", &curr_dir_save);
+    while (curr_dir != NULL) {
+        if (strchr(curr_dir, '.') != NULL) {    // path contains '.' - probably an .html file and not a dir
+            break;
+        }
+        strcat(full_path, curr_dir);
+        strcat(full_path, "/");
+        if (stat(full_path, &st) < 0) {
+            if (mkdir(full_path, DIRPERMS) < 0) {
+                perror("mkdir");
+                return EC_DIR;
+            }
+        }
+        curr_dir = strtok_r(NULL, "/", &curr_dir_save);
+    }
+    // Append full dir path to dirfile:
+    pthread_mutex_lock(&dirfile_mutex);
+    if (!existsInStringList(dirfileList, full_path)) {
+        appendStringListNode(dirfileList, full_path);
+    }
+    pthread_mutex_unlock(&dirfile_mutex);
+    return 0;
 }

@@ -1,7 +1,7 @@
-#include "lists.h"
-
 #ifndef REQUESTS_H
 #define REQUESTS_H
+
+#include "lists.h"
 
 #define HTTP_OK 200
 #define HTTP_BADREQUEST 400

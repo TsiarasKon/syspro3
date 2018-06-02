@@ -135,6 +135,7 @@ char *fileToString(FILE *fp) {
     return buffer;
 }
 
+
 StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port) {
     char *content_ptr = *content;
     StringList *content_links = createStringList();
@@ -160,13 +161,3 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
     }
     return content_links;
 }
-
-
-/* Sample request (use telnet) :
-    GET /site1/page1_4520.html HTTP/1.1
-    User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)
-    Host: www.tutorialspoint.com
-    Accept-Language: en-us
-    Accept-Encoding: gzip, deflate
-    Connection: Keep-Alive
-*/
