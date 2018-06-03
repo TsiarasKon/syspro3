@@ -7,6 +7,7 @@
 #include "util.h"
 
 int validateGETRequest(char *request, char **requested_file) {
+    // Validates the existence of "GET" and "Host:" lines
     char *curr_line_save = NULL;
     char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
     if (curr_line == NULL) {
@@ -138,6 +139,7 @@ long getContentLength(char * const response) {
 }
 
 StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port) {
+    // Returns a StringList of all the links contained in the content
     char *content_ptr = *content;
     StringList *content_links = createStringList();
     if (content_links == NULL) {
@@ -153,53 +155,16 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
             while (content_ptr[i] == '.') {     // skip '..' if root relative (as expected)
                 i++;
             }
-//            printf("~~");
-//            for (int k = i; k < i + 24; k++) {
-//                printf("%c", content_ptr[k]);
-//            }
-//            printf("~~\n");
             while (content_ptr[i] != '\0' && content_ptr[i] != '"') {
                 new_link[j] = content_ptr[i];
                 j++;
                 i++;
             }
             new_link[j] = '\0';
-            printf("||%s||\n", new_link);
+//            printf("||%s||\n", new_link);
             appendStringListNode(content_links, new_link);
         }
         i++;
     }
     return content_links;
-}
-
-
-char *fileToString(FILE *fp) {
-    // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
-    if (fp == NULL) {
-        fprintf(stderr, "Attempted fileToString() with NULL file.");
-        return NULL;
-    }
-    char *buffer = 0;
-    long length = 0;
-    if (fseek(fp, 0, SEEK_END)) {
-        perror("fseek");
-        return NULL;
-    }
-    length = ftell(fp);
-    if (length == -1L) {
-        perror("ftell");
-        return NULL;
-    }
-    if (fseek(fp, 0, SEEK_SET)) {
-        perror("fseek");
-        return NULL;
-    }
-    buffer = malloc((size_t) length);
-    if (buffer == NULL) {
-        perror("malloc in fileToString");
-        return NULL;
-    }
-    fread(buffer, 1, (size_t) length, fp);
-    buffer[length] = '\0';
-    return buffer;
 }

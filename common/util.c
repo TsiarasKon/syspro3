@@ -16,6 +16,7 @@ char* getTimeRunning(struct timeval start_time) {
     struct tm timeRunning;
     gmtime_r(&secRunning, &timeRunning);
     char *time_str;
+    // "HH:MM:SS.ms" - HH and MM will only be printed if HH or either (respectively) is greater than 0
     if (timeRunning.tm_hour > 0) {
         asprintf(&time_str, "%.2d:%.2d:%.2d.%.2lld", timeRunning.tm_hour, timeRunning.tm_min, timeRunning.tm_sec, (msRunning % 1000) / 10);
     } else if (timeRunning.tm_min > 0) {
@@ -34,4 +35,35 @@ char* getHTTPDate() {
     asprintf(&time_str, "Date: %s, %.2d %s %.4d %.2d:%.2d:%.2d GMT", days[t->tm_wday], t->tm_mday, months[t->tm_mon], \
     t->tm_year + 1900, t->tm_hour, t->tm_min, t->tm_sec);
     return time_str;
+}
+
+char *fileToString(FILE *fp) {
+    // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
+    if (fp == NULL) {
+        fprintf(stderr, "Attempted fileToString() with NULL file.");
+        return NULL;
+    }
+    char *buffer = 0;
+    long length = 0;
+    if (fseek(fp, 0, SEEK_END)) {
+        perror("fseek");
+        return NULL;
+    }
+    length = ftell(fp);
+    if (length == -1L) {
+        perror("ftell");
+        return NULL;
+    }
+    if (fseek(fp, 0, SEEK_SET)) {
+        perror("fseek");
+        return NULL;
+    }
+    buffer = malloc((size_t) length);
+    if (buffer == NULL) {
+        perror("malloc in fileToString");
+        return NULL;
+    }
+    fread(buffer, 1, (size_t) length, fp);
+    buffer[length] = '\0';
+    return buffer;
 }

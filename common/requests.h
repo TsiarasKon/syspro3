@@ -17,6 +17,4 @@ int getResponseCode(char *response);
 long getContentLength(char *response);
 StringList *retrieveLinks(char **content, char *hostaddr, int server_port);
 
-char *fileToString(FILE *fp);
-
 #endif

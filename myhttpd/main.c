@@ -38,6 +38,7 @@ void updateStats(long new_bytes_served);
 int command_handler(int cmdsock);
 void *connection_handler(void *args);
 
+// Volatile is used for good measure, so that the compiler won't mess with them
 volatile int thread_alive = 1;
 volatile int server_alive = 1;
 
@@ -46,7 +47,7 @@ void server_killer(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-    gettimeofday(&start_time, NULL);
+    gettimeofday(&start_time, NULL);        // Needed to later get server running time
     if (argc != 9) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
         return EC_ARG;
@@ -91,17 +92,6 @@ int main(int argc, char *argv[]) {
         return EC_ARG;
     }
 
-    int rv = EC_OK;
-    fdList = createIntList();
-    pthread_cond_init(&fdList_cond, NULL);
-    pthread_t pt_ids[thread_num];
-    for (int i = 0; i < thread_num; i++) {
-        if (pthread_create(&pt_ids[i], NULL, connection_handler, NULL)) {
-            perror("pthread_create");
-            rv = EC_THREAD;
-        }
-    }
-
     // Signal handling for graceful exit on fatal signals:
     struct sigaction act;
     memset(&act, 0, sizeof(act));
@@ -109,6 +99,17 @@ int main(int argc, char *argv[]) {
     sigaction(SIGINT,  &act, 0);
     sigaction(SIGTERM, &act, 0);
     sigaction(SIGQUIT, &act, 0);
+
+    int exit_code = EC_OK;
+    fdList = createIntList();
+    pthread_cond_init(&fdList_cond, NULL);
+    pthread_t pt_ids[thread_num];
+    for (int i = 0; i < thread_num; i++) {
+        if (pthread_create(&pt_ids[i], NULL, connection_handler, NULL)) {
+            perror("pthread_create");
+            exit_code = EC_THREAD;
+        }
+    }
 
     struct sockaddr_in server;
     struct sockaddr_in command;
@@ -123,11 +124,11 @@ int main(int argc, char *argv[]) {
     int commandsock, clientsock;
     if ((commandsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
-        rv = EC_SOCK;
+        exit_code = EC_SOCK;
     }
     if ((clientsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
-        rv = EC_SOCK;
+        exit_code = EC_SOCK;
     }
     // Setting SO_REUSEADDR so that server can be restarted without bind() failing with "Address already in use"
     int literally_just_one = 1;
@@ -143,48 +144,54 @@ int main(int argc, char *argv[]) {
     server.sin_port = htons((uint16_t) command_port);
     if (bind(commandsock, serverptr, sizeof(server)) < 0) {
         perror("bind");
-        rv = EC_SOCK;
+        exit_code = EC_SOCK;
     }
     server.sin_port = htons((uint16_t) serving_port);
     if (bind(clientsock, serverptr, sizeof(server)) < 0) {
         perror("bind");
-        rv = EC_SOCK;
+        exit_code = EC_SOCK;
     }
     // Listen for connections:
     if (listen(commandsock, CMD_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
-        rv = EC_SOCK;
+        exit_code = EC_SOCK;
     }
     if (listen(clientsock, CLIENT_LISTEN_QUEUE_SIZE) < 0) {
         perror("listen");
-        rv = EC_SOCK;
+        exit_code = EC_SOCK;
     }
+
+    // We'll be polling in the socket's fd so as to avoid blocking trying to accept from one of them
     struct pollfd pfds[2];
     pfds[0].fd = commandsock;
     pfds[0].events = POLLIN;
     pfds[1].fd = clientsock;
     pfds[1].events = POLLIN;
     int newfd;
-    while (server_alive && !rv) {
+    while (server_alive && !exit_code) {
+        // Looping to find dead threads:
         for (int i = 0; i < thread_num; i++) {
             if (!pthread_tryjoin_np(pt_ids[i], NULL)) {         // successfully joined with thread i
                 if (pthread_create(&pt_ids[i], NULL, connection_handler, NULL)) {   // recreate thread i
                     perror("pthread_create");
-                    rv = EC_THREAD;
+                    return EC_THREAD;
                 }
             }
         }
+        // Block waiting to read from either socket:
         if (poll(pfds, 2, -1) < 0) {
             if (errno == EINTR) {       // killing signal arrived
                 break;
             }
             perror("poll");
-            rv = EC_SOCK;
+            exit_code = EC_SOCK;
+            break;
         }
         if (pfds[0].revents & POLLIN) {      // commandsock is ready to accept
             if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
                 perror("accept");
-                rv = EC_SOCK;
+                exit_code = EC_SOCK;
+                break;
             }
             printf("Main thread: Established command connection.\n");
             if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
@@ -193,13 +200,14 @@ int main(int argc, char *argv[]) {
         } else {      // clientsock is ready to accept
             if ((newfd = accept(clientsock, clientptr, &client_len)) < 0) {
                 perror("accept");
-                rv = EC_SOCK;
+                exit_code = EC_SOCK;
+                break;
             }
             appendToFdList(newfd);     // will broadcast to threads to handle the new client
         }
     }
     thread_alive = 0;
-    for (int i = 0; i < thread_num; i++) {      // wake all the threads
+    for (int i = 0; i < thread_num; i++) {      // signal the threads to terminate
         pthread_cond_broadcast(&fdList_cond);
     }
     for (int i = 0; i < thread_num; i++) {      // join with all the threads
@@ -208,10 +216,38 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&fdList_cond);
     destroyIntList(&fdList);
     printf("Main thread has exited.\n");
-    return rv;
+    return exit_code;
+}
+
+int acquireFd() {
+    pthread_mutex_lock(&fdList_mutex);
+    while (isIntListEmpty(fdList) && thread_alive) {
+        pthread_cond_wait(&fdList_cond, &fdList_mutex);
+    }
+    int fd = popIntListNode(fdList);
+    pthread_mutex_unlock(&fdList_mutex);
+    if (! isIntListEmpty(fdList)) {
+        pthread_cond_broadcast(&fdList_cond);
+    }
+    return fd;
+}
+
+void appendToFdList(int fd) {
+    pthread_mutex_lock(&fdList_mutex);
+    appendIntListNode(fdList, fd);
+    pthread_mutex_unlock(&fdList_mutex);
+    pthread_cond_broadcast(&fdList_cond);
+}
+
+void updateStats(long new_bytes_served) {
+    pthread_mutex_lock(&stats_mutex);
+    pages_served++;
+    bytes_served += new_bytes_served;
+    pthread_mutex_unlock(&stats_mutex);
 }
 
 int command_handler(int cmdsock) {
+    /// TODO feature: thread timeout
     char command[BUFSIZ];        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
         perror("Error reading from socket");
@@ -244,33 +280,6 @@ int command_handler(int cmdsock) {
     return EC_OK;
 }
 
-int acquireFd() {
-    pthread_mutex_lock(&fdList_mutex);
-    while (isIntListEmpty(fdList) && thread_alive) {
-        pthread_cond_wait(&fdList_cond, &fdList_mutex);
-    }
-    int fd = popIntListNode(fdList);
-    pthread_mutex_unlock(&fdList_mutex);
-    if (! isIntListEmpty(fdList)) {
-        pthread_cond_broadcast(&fdList_cond);
-    }
-    return fd;
-}
-
-void appendToFdList(int fd) {
-    pthread_mutex_lock(&fdList_mutex);
-    appendIntListNode(fdList, fd);
-    pthread_mutex_unlock(&fdList_mutex);
-    pthread_cond_broadcast(&fdList_cond);
-}
-
-void updateStats(long new_bytes_served) {
-    pthread_mutex_lock(&stats_mutex);
-    pages_served++;
-    bytes_served += new_bytes_served;
-    pthread_mutex_unlock(&stats_mutex);
-}
-
 void *connection_handler(void *args) {
     /// TODO feature: thread timeout
     pthread_t self_id = pthread_self();
@@ -285,7 +294,7 @@ void *connection_handler(void *args) {
         char *msg_buf = malloc(BUFSIZ);
         msg_buf[0] = '\0';
         ssize_t bytes_read;
-        do {
+        do {        // read entire GET request, reallocing if necessary
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(sock, curr_buf, BUFSIZ);
             curr_buf[BUFSIZ - 1] = '\0';

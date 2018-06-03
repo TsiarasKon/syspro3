@@ -59,6 +59,7 @@ int mkdir_path(char *linkpath);
 int command_handler(int cmdsock);
 void *crawler_thread(void *args);
 
+// Volatile is used for good measure, so that the compiler won't mess with them
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
 
@@ -67,15 +68,13 @@ void crawler_killer(int signum) {
 }
 
 int main(int argc, char *argv[]) {
-    gettimeofday(&start_time, NULL);
+    gettimeofday(&start_time, NULL);        // Needed to later get server running time
     if (argc != 12) {
-        fprintf(stderr,
-                "Invalid arguments. Please run \"$ ./mycrawler -h host_or_IP -p port -c command_port -t num_of_threads -d save_dir starting_URL\"\n");
+        fprintf(stderr, "Invalid arguments. Please run \"$ ./mycrawler -h host_or_IP -p port -c command_port -t num_of_threads -d save_dir starting_URL\"\n");
         return EC_ARG;
     }
     int command_port = -1;
-    char *starting_URL = NULL;
-    starting_URL = argv[11];
+    char *starting_URL = argv[11];
     int option;
     while ((option = getopt(argc, argv, "h:p:c:t:d")) != -1) {
         switch (option) {
@@ -104,8 +103,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if (hostaddr == NULL || server_port <= 0 || command_port <= 0 || thread_num <= 0 || save_dir == NULL || starting_URL == NULL) {
-        fprintf(stderr,
-                "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
+        fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
         return EC_ARG;
     }
     if (server_port == command_port) {
@@ -172,48 +170,53 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    int rv = EC_OK;
+    int exit_code = EC_OK;
 
+    // Create both waiting and visited link lists and append starting_url to them (no need for mutex yet)
     waitingLinkList = createStringList();
     visitedLinkList = createStringList();
-    StringList *startingLink = createStringList();
-    appendStringListNode(startingLink, starting_URL);
-    appendToLinkList(startingLink);
-    destroyStringList(&startingLink);
-    dirfileList = createStringList();
+    appendStringListNode(waitingLinkList, starting_URL);
+    appendStringListNode(visitedLinkList, starting_URL);
+
+    dirfileList = createStringList();       // list containing the paths of files (needed for jobExecutor)
 
     pthread_cond_init(&linkList_cond, NULL);
     pthread_t pt_ids[thread_num];
     for (int i = 0; i < thread_num; i++) {
         if (pthread_create(&pt_ids[i], NULL, crawler_thread, NULL)) {
             perror("pthread_create");
-            rv = EC_THREAD;
+            exit_code = EC_THREAD;
         }
     }
 
     int newfd;
-    while (crawler_alive && !rv) {
-        for (int i = 0; i < thread_num; i++) {
-            if (!pthread_tryjoin_np(pt_ids[i], NULL)) {         // successfully joined with thread i
-                if (pthread_create(&pt_ids[i], NULL, crawler_thread, NULL)) {   // recreate thread i
-                    perror("pthread_create");
-                    rv = EC_THREAD;
+    while (crawler_alive && !exit_code) {
+        // Looping to find dead threads, if crawling still in progress:
+        if (thread_alive) {
+            for (int i = 0; i < thread_num; i++) {
+                if (!pthread_tryjoin_np(pt_ids[i], NULL)) {         // successfully joined with thread i
+                    if (pthread_create(&pt_ids[i], NULL, crawler_thread, NULL)) {   // recreate thread i
+                        perror("pthread_create");
+                        return EC_THREAD;
+                    }
                 }
             }
         }
+        // Block waiting to accept from commandsock:
         if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
             if (errno == EINTR) {       // killing signal arrived
                 break;
             }
             perror("accept");
-            rv = EC_SOCK;
+            exit_code = EC_SOCK;
+            break;
         }
         printf("Main thread: Established command connection.\n");
         if (command_handler(newfd) != EC_OK) {     // either error or "SHUTDOWN" was requested
             crawler_alive = 0;
         }
     }
-    if (!thread_alive) {        // threads are already dead and jobExecutor is running
+    if (!thread_alive && pages_downloaded > 0) {        // threads are already dead and jobExecutor is running
         if (write(to_JE[1], "/exit\n", 6) == -1) {
             perror("Error writing to pipe");
         }
@@ -234,7 +237,7 @@ int main(int argc, char *argv[]) {
     destroyStringList(&visitedLinkList);
     destroyStringList(&dirfileList);
     printf("Main thread has exited.\n");
-    return rv;
+    return exit_code;
 }
 
 char *acquireLink() {
@@ -347,7 +350,7 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
         }
         curr_dir = strtok_r(NULL, "/", &curr_dir_save);
     }
-    // Append full dir path to dirfile:
+    // Append full dir path to dirfileList:
     pthread_mutex_lock(&dirfile_mutex);
     if (!existsInStringList(dirfileList, full_path)) {
         appendStringListNode(dirfileList, full_path);
@@ -357,11 +360,14 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
 }
 
 int command_handler(int cmdsock) {
+    /// TODO feature: thread timeout
     char command[BUFSIZ];        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
         perror("Error reading from socket");
+        close(cmdsock);
         return EC_SOCK;
     }
+    int rv = EC_OK;
     char *command_save;
     strtok_r(command, "\r\n", &command_save);            // remove trailing newline
     if (!strcmp(command, "STATS")) {
@@ -373,6 +379,7 @@ int command_handler(int cmdsock) {
         pthread_mutex_unlock(&stats_mutex);
         if (write(cmdsock, stats_response, strlen(stats_response) + 1) < 0) {
             perror("Error writing to socket");
+            close(cmdsock);
             return EC_SOCK;
         }
         printf("%s", stats_response);
@@ -384,33 +391,37 @@ int command_handler(int cmdsock) {
             char search_response[] = " SEARCH command cannot be executed right now - Site crawling is still in progress.\n";
             if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
                 perror("Error writing to socket");
+                close(cmdsock);
                 return EC_SOCK;
             }
         } else if (pages_downloaded == 0) {
             char search_response[] = " No pages were downloaded. SEARCH command is not available.\n";
             if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
                 perror("Error writing to socket");
+                close(cmdsock);
                 return EC_SOCK;
             }
         } else if (strlen(command) < 8 || isspace(command[7])) {       // No arguments given
             char search_response[] = " Invalid use of SEARCH command - use as: \"SEARCH word1 word2 ...\"\n";
             if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
                 perror("Error writing to socket");
+                close(cmdsock);
                 return EC_SOCK;
             }
         } else {
-            char search_command[BUFSIZ] = "/search ";
+            char search_command[BUFSIZ] = "/search ";       // to be sent to jobExecutor
             strcat(search_command, command + 7);
             strcat(search_command, " -d 0\n");
             if (write(to_JE[1], search_command, strlen(search_command)) == -1) {
                 perror("Error writing to pipe");
+                close(cmdsock);
                 return EC_PIPE;
             }
             char buffer[BUFSIZ] = "";
             long bytes_read = 0;
             int message_end = 0;
             while (!message_end && (bytes_read = read(from_JE[0], buffer, BUFSIZ - 1)) > 0) {
-                if (!strcmp(buffer, "<")) {
+                if (!strcmp(buffer, "<")) {     // message-terminating character
                     break;
                 }
                 if (strlen(buffer) < 2) {       // skip '\n' lines
@@ -426,33 +437,35 @@ int command_handler(int cmdsock) {
                     //printf(" %s", buffer + 17);
                     if (write(cmdsock, buffer + 17, strlen(buffer) - 16) < 0) {
                         perror("Error writing to socket");
+                        close(cmdsock);
                         return EC_SOCK;
                     }
                 } else {
                     //printf("%s", buffer);
                     if (write(cmdsock, buffer, strlen(buffer) + 1) < 0) {
                         perror("Error writing to socket");
+                        close(cmdsock);
                         return EC_SOCK;
                     }
                 }
-                if (strchr(buffer, '<') != NULL) {      // Shouldn't be needed: Last resort, in case we previously missed '<'
+                if (strchr(buffer, '<') != NULL) {      // Shouldn't be needed: Last resort in case we previously missed '<'
                     break;
                 }
             }
             if (bytes_read < 0) {
                 perror("Error reading from pipe");
-                exit(EC_PIPE);
+                close(cmdsock);
+                return EC_PIPE;
             }
         }
     } else if (!strcmp(command, "SHUTDOWN")) {
         printf("Main thread: Received SHUTDOWN command ...\n");
-        close(cmdsock);
-        return -1;
+        rv = -1;
     } else {
         printf("Main thread: Unknown command \"%s\".\n", command);
     }
     close(cmdsock);
-    return EC_OK;
+    return rv;
 }
 
 void *crawler_thread(void *args) {
@@ -475,12 +488,12 @@ void *crawler_thread(void *args) {
         struct sockaddr *serverptr = (struct sockaddr *) &server;
         struct hostent hbuf, *hent;
         int rv, err;
-        size_t temp_buf_len = BUFSIZ;
-        char *temp_buf = malloc(temp_buf_len);
-        while ((rv = gethostbyname_r(hostaddr, &hbuf, temp_buf, temp_buf_len, &hent, &err)) == ERANGE) {
-            temp_buf_len *= 2;
-            temp_buf = realloc(temp_buf, temp_buf_len);
-            if (temp_buf == NULL) {
+        size_t temp_hbuf_len = BUFSIZ;
+        char *temp_hbuf = malloc(temp_hbuf_len);
+        while ((rv = gethostbyname_r(hostaddr, &hbuf, temp_hbuf, temp_hbuf_len, &hent, &err)) == ERANGE) {
+            temp_hbuf_len *= 2;
+            temp_hbuf = realloc(temp_hbuf, temp_hbuf_len);
+            if (temp_hbuf == NULL) {
                 perror("realloc");
                 return (void *) EC_MEM;
             }
@@ -489,7 +502,6 @@ void *crawler_thread(void *args) {
             perror("gethostbyname");
             return (void *) EC_SOCK;
         }
-        free(temp_buf);
         server.sin_family = AF_INET;
         memcpy(&server.sin_addr, hent->h_addr, (size_t) hent->h_length);
         server.sin_port = htons((uint16_t) server_port);
@@ -514,7 +526,7 @@ void *crawler_thread(void *args) {
         msg_buf[0] = '\0';
         ssize_t bytes_read;
         int content_pos = 0;
-        do {
+        do {        // read entire server response, reallocing if necessary
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(serversock, curr_buf, BUFSIZ);
             curr_buf[BUFSIZ - 1] = '\0';
@@ -534,12 +546,10 @@ void *crawler_thread(void *args) {
             free(link_ptr);
             free(msg_buf);
             close(serversock);
+            free(temp_hbuf);
             continue;
         }
         long content_len = getContentLength(msg_buf);
-        if (content_len < 0) {
-            continue;
-        }
         char *content = malloc((size_t) content_len + 1);
         if (content == NULL) {
             perror("malloc in content");
@@ -547,7 +557,7 @@ void *crawler_thread(void *args) {
         }
         strcpy(content, msg_buf + content_pos + 1);
         free(msg_buf);
-        do {
+        do {        // read entire server response (which is now known to fit in "content")
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(serversock, curr_buf, BUFSIZ);
             curr_buf[BUFSIZ - 1] = '\0';
@@ -571,6 +581,7 @@ void *crawler_thread(void *args) {
             return (void *) EC_DIR;
         }
 
+        // Retrieve new links in current site and append them to LinkList
         StringList *content_links = retrieveLinks(&content, hostaddr, server_port);
         if (content_links == NULL) {
             return (void *) EC_MEM;
@@ -578,6 +589,7 @@ void *crawler_thread(void *args) {
         appendToLinkList(content_links);
         destroyStringList(&content_links);
 
+        // Save current site to disk:
         FILE *fp = fopen(link_path, "w");
         if (fp == NULL) {       // failed to open file
             perror("fopen");
@@ -592,6 +604,7 @@ void *crawler_thread(void *args) {
         if (content_len > 0) {
             updateStats(content_len);
         }
+        free(temp_hbuf);
         close(serversock);
     }
     printf("Thread %lu has exited.\n", self_id);
