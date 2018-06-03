@@ -4,10 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/lists.c.o"
+  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o"
+  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o"
+  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o"
   "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/main.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/main.c.o"
-  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/requests.c.o"
-  "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.c" "/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles/mycrawler.dir/util.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

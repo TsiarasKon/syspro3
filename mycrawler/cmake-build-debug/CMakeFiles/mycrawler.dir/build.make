@@ -81,92 +81,92 @@ CMakeFiles/mycrawler.dir/main.c.o.provides: CMakeFiles/mycrawler.dir/main.c.o.re
 CMakeFiles/mycrawler.dir/main.c.o.provides.build: CMakeFiles/mycrawler.dir/main.c.o
 
 
-CMakeFiles/mycrawler.dir/util.c.o: CMakeFiles/mycrawler.dir/flags.make
-CMakeFiles/mycrawler.dir/util.c.o: ../util.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/mycrawler.dir/util.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/mycrawler.dir/util.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.c
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o: CMakeFiles/mycrawler.dir/flags.make
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o: /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c
 
-CMakeFiles/mycrawler.dir/util.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/mycrawler.dir/util.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.c > CMakeFiles/mycrawler.dir/util.c.i
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c > CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i
 
-CMakeFiles/mycrawler.dir/util.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/mycrawler.dir/util.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.c -o CMakeFiles/mycrawler.dir/util.c.s
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c -o CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s
 
-CMakeFiles/mycrawler.dir/util.c.o.requires:
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires:
 
-.PHONY : CMakeFiles/mycrawler.dir/util.c.o.requires
+.PHONY : CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires
 
-CMakeFiles/mycrawler.dir/util.c.o.provides: CMakeFiles/mycrawler.dir/util.c.o.requires
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/util.c.o.provides.build
-.PHONY : CMakeFiles/mycrawler.dir/util.c.o.provides
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides.build
+.PHONY : CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides
 
-CMakeFiles/mycrawler.dir/util.c.o.provides.build: CMakeFiles/mycrawler.dir/util.c.o
-
-
-CMakeFiles/mycrawler.dir/requests.c.o: CMakeFiles/mycrawler.dir/flags.make
-CMakeFiles/mycrawler.dir/requests.c.o: ../requests.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/mycrawler.dir/requests.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/mycrawler.dir/requests.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.c
-
-CMakeFiles/mycrawler.dir/requests.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/mycrawler.dir/requests.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.c > CMakeFiles/mycrawler.dir/requests.c.i
-
-CMakeFiles/mycrawler.dir/requests.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/mycrawler.dir/requests.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.c -o CMakeFiles/mycrawler.dir/requests.c.s
-
-CMakeFiles/mycrawler.dir/requests.c.o.requires:
-
-.PHONY : CMakeFiles/mycrawler.dir/requests.c.o.requires
-
-CMakeFiles/mycrawler.dir/requests.c.o.provides: CMakeFiles/mycrawler.dir/requests.c.o.requires
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/requests.c.o.provides.build
-.PHONY : CMakeFiles/mycrawler.dir/requests.c.o.provides
-
-CMakeFiles/mycrawler.dir/requests.c.o.provides.build: CMakeFiles/mycrawler.dir/requests.c.o
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides.build: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
 
 
-CMakeFiles/mycrawler.dir/lists.c.o: CMakeFiles/mycrawler.dir/flags.make
-CMakeFiles/mycrawler.dir/lists.c.o: ../lists.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/mycrawler.dir/lists.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/mycrawler.dir/lists.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.c
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o: CMakeFiles/mycrawler.dir/flags.make
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o: /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c
 
-CMakeFiles/mycrawler.dir/lists.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/mycrawler.dir/lists.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.c > CMakeFiles/mycrawler.dir/lists.c.i
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c > CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i
 
-CMakeFiles/mycrawler.dir/lists.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/mycrawler.dir/lists.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.c -o CMakeFiles/mycrawler.dir/lists.c.s
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c -o CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s
 
-CMakeFiles/mycrawler.dir/lists.c.o.requires:
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires:
 
-.PHONY : CMakeFiles/mycrawler.dir/lists.c.o.requires
+.PHONY : CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires
 
-CMakeFiles/mycrawler.dir/lists.c.o.provides: CMakeFiles/mycrawler.dir/lists.c.o.requires
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.o.provides.build
-.PHONY : CMakeFiles/mycrawler.dir/lists.c.o.provides
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides.build
+.PHONY : CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides
 
-CMakeFiles/mycrawler.dir/lists.c.o.provides.build: CMakeFiles/mycrawler.dir/lists.c.o
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides.build: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+
+
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o: CMakeFiles/mycrawler.dir/flags.make
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o: /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c
+
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c > CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i
+
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c -o CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s
+
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires:
+
+.PHONY : CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires
+
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides.build
+.PHONY : CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides
+
+CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides.build: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
 
 
 # Object files for target mycrawler
 mycrawler_OBJECTS = \
 "CMakeFiles/mycrawler.dir/main.c.o" \
-"CMakeFiles/mycrawler.dir/util.c.o" \
-"CMakeFiles/mycrawler.dir/requests.c.o" \
-"CMakeFiles/mycrawler.dir/lists.c.o"
+"CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o" \
+"CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o" \
+"CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o"
 
 # External object files for target mycrawler
 mycrawler_EXTERNAL_OBJECTS =
 
 mycrawler: CMakeFiles/mycrawler.dir/main.c.o
-mycrawler: CMakeFiles/mycrawler.dir/util.c.o
-mycrawler: CMakeFiles/mycrawler.dir/requests.c.o
-mycrawler: CMakeFiles/mycrawler.dir/lists.c.o
+mycrawler: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
+mycrawler: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+mycrawler: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
 mycrawler: CMakeFiles/mycrawler.dir/build.make
 mycrawler: CMakeFiles/mycrawler.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C executable mycrawler"
@@ -178,9 +178,9 @@ CMakeFiles/mycrawler.dir/build: mycrawler
 .PHONY : CMakeFiles/mycrawler.dir/build
 
 CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/main.c.o.requires
-CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/util.c.o.requires
-CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/requests.c.o.requires
-CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/lists.c.o.requires
+CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires
+CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires
+CMakeFiles/mycrawler.dir/requires: CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires
 
 .PHONY : CMakeFiles/mycrawler.dir/requires
 

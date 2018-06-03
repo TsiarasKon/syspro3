@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
         remove(dirfile);
     }
     if (!stat(save_dir, &st)) {      // save_dir already exists
-        printf("save_dir '%s' already exists. Renaming it ...\n", save_dir);
+        printf(" save_dir '%s' already exists. Renaming it ...\n", save_dir);
         int i = 0;
         char old_save_dir[PATH_MAX];
         do {
@@ -166,9 +166,9 @@ int main(int argc, char *argv[]) {
             i++;
         } while (!stat(old_save_dir, &st));
         if (rename(save_dir, old_save_dir) < 0) {
-            printf("Failed to rename existing save_dir. It will be overwritten by this program.\n");
+            printf(" Failed to rename existing save_dir. It will be overwritten by this program.\n");
         } else {
-            printf("Old save_dir successfully renamed to '%s'.\n", old_save_dir);
+            printf(" Old save_dir successfully renamed to '%s'.\n", old_save_dir);
         }
     }
 
@@ -206,8 +206,8 @@ int main(int argc, char *argv[]) {
         }
     }
     if (!thread_alive) {        // threads are already dead and jobExecutor is running
-        if (write(to_JE[1], "/exit\n", 6) == -1) {  ///
-            perror("Server: Error writing to pipe");
+        if (write(to_JE[1], "/exit\n", 6) == -1) {
+            perror("Error writing to pipe");
         }
         close(to_JE[1]);
         close(from_JE[0]);
@@ -240,12 +240,17 @@ char *acquireLink() {
     pthread_mutex_unlock(&linkList_mutex);
     if (link == NULL && thread_alive == 1) {        // crawling complete; instantiate jobExecutor
         thread_alive = 0;
-        pthread_cond_broadcast(&linkList_cond);
+        for (int i = 0; i < thread_num - 1; i++) {
+            pthread_cond_broadcast(&linkList_cond);
+        }
         /* Uncommenting this block would lead to program termination once crawling is complete
         kill(getpid(), SIGINT);
         return NULL;
         */
-        printf(" Site crawling complete. SEARCH command is now available.\n");
+        printf(" Site crawling complete - %d pages downloaded.\n", pages_downloaded);
+        if (pages_downloaded == 0) {
+            return NULL;
+        }
         // Fork and execute jobExecutor from child:
         // Creating dirfile that will be passed as an argument to jobExecutor:
         FILE *dirfp = fopen(dirfile, "w");
@@ -279,6 +284,7 @@ char *acquireLink() {
         } else {
             close(to_JE[0]);
             close(from_JE[1]);
+            printf(" SEARCH command is now available.\n");
         }
     }
     if (! isStringListEmpty(waitingLinkList)) {
@@ -366,7 +372,13 @@ int command_handler(int cmdsock) {
     } else if (!strncmp(command, "SEARCH", 6)) {
         printf("Main thread: Received SEARCH command.\n");
         if (thread_alive) {
-            char search_response[] = "Main thread: SEARCH command cannot be executed right now - Site crawling is still in progress.\n";
+            char search_response[] = " SEARCH command cannot be executed right now - Site crawling is still in progress.\n";
+            if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
+                perror("Error writing to socket");
+                return EC_SOCK;
+            }
+        } else if (pages_downloaded == 0) {
+            char search_response[] = " No pages were downloaded. SEARCH command is not available.\n";
             if (write(cmdsock, search_response, strlen(search_response) + 1) < 0) {
                 perror("Error writing to socket");
                 return EC_SOCK;
@@ -382,7 +394,7 @@ int command_handler(int cmdsock) {
             strcat(search_command, command + 7);
             strcat(search_command, " -d 0\n");
             if (write(to_JE[1], search_command, strlen(search_command)) == -1) {
-                perror("Server: Error writing to pipe");
+                perror("Error writing to pipe");
                 return EC_PIPE;
             }
             char buffer[BUFSIZ] = "";
@@ -419,7 +431,7 @@ int command_handler(int cmdsock) {
                 }
             }
             if (bytes_read < 0) {
-                perror("Server: Error reading from pipe");
+                perror("Error reading from pipe");
                 exit(EC_PIPE);
             }
         }
@@ -444,7 +456,7 @@ void *crawler_thread(void *args) {
         if (!thread_alive || link == NULL) {     // SHUTDOWN may have arrived while thread was waiting to acquireLink
             break;
         }
-        printf("Thread %lu: Received %s.\n", self_id, link);
+        printf("Thread %lu: Requesting %s ...\n", self_id, link);
         int serversock;
         if ((serversock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             perror("socket");
@@ -471,7 +483,7 @@ void *crawler_thread(void *args) {
         }
         link = strchr(link, '/');       // skip link address
         char *request = generateGETRequest(link);
-        if (write(serversock, request, strlen(request) + 1) < 0) {      /// +1 ?
+        if (write(serversock, request, strlen(request) + 1) < 0) {
             perror("Error writing to socket");
             return (void *) EC_SOCK;
         }
@@ -496,6 +508,12 @@ void *crawler_thread(void *args) {
                 }
             }
         } while (bytes_read > 0);
+        if (getResponseCode(msg_buf) != HTTP_OK) {
+            printf("Thread %lu: Failed to GET '%s'\n", self_id, link);
+            free(link_ptr);
+            free(msg_buf);
+            continue;
+        }
         long content_len = getContentLength(msg_buf);
         if (content_len < 0) {
             continue;
@@ -545,7 +563,7 @@ void *crawler_thread(void *args) {
         }
         fprintf(fp, "%s", content);
         fclose(fp);
-        printf("Thread %lu: Saved %s to disk.\n", self_id, link);
+        printf("Thread %lu: Received %s and saved it to disk.\n", self_id, link);
 
         free(link_ptr);
         free(content);

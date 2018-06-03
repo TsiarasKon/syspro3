@@ -123,32 +123,86 @@ mycrawler/fast:
 	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/build
 .PHONY : mycrawler/fast
 
-lists.o: lists.c.o
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.o: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
 
-.PHONY : lists.o
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.o
 
 # target to build an object file
-lists.c.o:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.o
-.PHONY : lists.c.o
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
 
-lists.i: lists.c.i
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.i: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i
 
-.PHONY : lists.i
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.i
 
 # target to preprocess a source file
-lists.c.i:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.i
-.PHONY : lists.c.i
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i
 
-lists.s: lists.c.s
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.s: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s
 
-.PHONY : lists.s
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.s
 
 # target to generate assembly for a file
-lists.c.s:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/lists.c.s
-.PHONY : lists.c.s
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s
+
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.o: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.o
+
+# target to build an object file
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.i: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i
+
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.i
+
+# target to preprocess a source file
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i
+
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.s: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s
+
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.s
+
+# target to generate assembly for a file
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s
+
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.o: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
+
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.o
+
+# target to build an object file
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
+
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.i: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i
+
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.i
+
+# target to preprocess a source file
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i
+
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.s: home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s
+
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.s
+
+# target to generate assembly for a file
+home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s:
+	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s
+.PHONY : home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s
 
 main.o: main.c.o
 
@@ -177,60 +231,6 @@ main.c.s:
 	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/main.c.s
 .PHONY : main.c.s
 
-requests.o: requests.c.o
-
-.PHONY : requests.o
-
-# target to build an object file
-requests.c.o:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/requests.c.o
-.PHONY : requests.c.o
-
-requests.i: requests.c.i
-
-.PHONY : requests.i
-
-# target to preprocess a source file
-requests.c.i:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/requests.c.i
-.PHONY : requests.c.i
-
-requests.s: requests.c.s
-
-.PHONY : requests.s
-
-# target to generate assembly for a file
-requests.c.s:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/requests.c.s
-.PHONY : requests.c.s
-
-util.o: util.c.o
-
-.PHONY : util.o
-
-# target to build an object file
-util.c.o:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/util.c.o
-.PHONY : util.c.o
-
-util.i: util.c.i
-
-.PHONY : util.i
-
-# target to preprocess a source file
-util.c.i:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/util.c.i
-.PHONY : util.c.i
-
-util.s: util.c.s
-
-.PHONY : util.s
-
-# target to generate assembly for a file
-util.c.s:
-	$(MAKE) -f CMakeFiles/mycrawler.dir/build.make CMakeFiles/mycrawler.dir/util.c.s
-.PHONY : util.c.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -240,18 +240,18 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... mycrawler"
-	@echo "... lists.o"
-	@echo "... lists.i"
-	@echo "... lists.s"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.o"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.i"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.s"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.o"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.i"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.s"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.o"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.i"
+	@echo "... home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... requests.o"
-	@echo "... requests.i"
-	@echo "... requests.s"
-	@echo "... util.o"
-	@echo "... util.i"
-	@echo "... util.s"
 .PHONY : help
 
 

@@ -101,15 +101,39 @@ int endOfRequest(char const *request) {      // Return the index of the second n
     return 0;
 }
 
-long getContentLength(char *request) {
+int getResponseCode(char * const response) {
+    char *response_copy = malloc(strlen(response) + 1);
+    char *response_copyptr = response_copy;
+    strcpy(response_copy, response);
+    char *curr_word_save = NULL;
+    char *curr_word = strtok_r(response_copy, " ", &curr_word_save);     // "HTTP/1.1"
+    if (curr_word != NULL) {
+        curr_word = strtok_r(NULL, " ", &curr_word_save);
+        if (curr_word != NULL) {
+            int code = atoi(curr_word);
+            free(response_copyptr);
+            return code;
+        }
+    }
+    free(response_copyptr);
+    return -1;
+}
+
+long getContentLength(char * const response) {
+    char *response_copy = malloc(strlen(response) + 1);
+    char *response_copyptr = response_copy;
+    strcpy(response_copy, response);
     char *curr_line_save = NULL;
-    char *curr_line = strtok_r(request, "\r\n", &curr_line_save);
+    char *curr_line = strtok_r(response_copy, "\r\n", &curr_line_save);
     while (curr_line != NULL) {
         if (strlen(curr_line) > 16 && !strncmp(curr_line, "Content-Length: ", 16)) {
-            return atoi(curr_line + 16);
+            long cont_len = atoi(curr_line + 16);
+            free(response_copyptr);
+            return cont_len;
         }
         curr_line = strtok_r(NULL, "\r\n", &curr_line_save);
     }
+    free(response_copyptr);
     return -1;
 }
 
@@ -125,6 +149,9 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
             i += 9;
             char new_link[PATH_MAX];        // link len won't be larger than PATH_MAX
             sprintf(new_link, "http://%s:%d", hostaddr, server_port);
+            while (content_ptr[i] == '.') {     // skip '..' if root relative (as expected)
+                i++;
+            }
             int j = (int) strlen(new_link);
             while (content_ptr[i] != '\0' && content_ptr[i] != '\"') {
                 new_link[j] = content_ptr[i];
@@ -143,7 +170,7 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
 char *fileToString(FILE *fp) {
     // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
     if (fp == NULL) {
-        fprintf(stderr, "fileToString() with empty file.");
+        fprintf(stderr, "Attempted fileToString() with NULL file.");
         return NULL;
     }
     char *buffer = 0;

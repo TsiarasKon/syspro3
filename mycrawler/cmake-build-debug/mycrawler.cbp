@@ -84,28 +84,25 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/crawler_globals.h">
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c">
 			<Option target="mycrawler"/>
 		</Unit>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.c">
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.h">
 			<Option target="mycrawler"/>
 		</Unit>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/lists.h">
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c">
+			<Option target="mycrawler"/>
+		</Unit>
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.h">
+			<Option target="mycrawler"/>
+		</Unit>
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c">
+			<Option target="mycrawler"/>
+		</Unit>
+		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.h">
 			<Option target="mycrawler"/>
 		</Unit>
 		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/main.c">
-			<Option target="mycrawler"/>
-		</Unit>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.c">
-			<Option target="mycrawler"/>
-		</Unit>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/requests.h">
-			<Option target="mycrawler"/>
-		</Unit>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.c">
-			<Option target="mycrawler"/>
-		</Unit>
-		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/util.h">
 			<Option target="mycrawler"/>
 		</Unit>
 		<Unit filename="/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/mycrawler/CMakeLists.txt">

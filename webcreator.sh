@@ -27,7 +27,7 @@ p1=$(($4 - 1))
 # Purging root_directory, if full:
 if test "$(ls -A "$1")"; then
     echo "Warning: directory is full, purging ..."
-	ls -dA1 $PWD/$1/* | xargs rm -r 		# also deletes hidden files
+	ls -dA1 $PWD/$1/* | xargs rm -r 		# unlike "rm -rf $PWD/$1/*", this also deletes hidden files
 fi
 
 # Create directories and web sites names:
@@ -38,7 +38,7 @@ for i in $(seq 0 "$w1"); do
 	mkdir "$di"
 	randnums=($(shuf -i 1000-"$p9000" -n "$4"))		# effectively creating 4-digit random numbers
 	for j in $(seq 0 $p1); do
-		pg=/site"$i"/page"$j"_"${randnums[$j]}".html
+		pg="/site$i/page${j}_${randnums[$j]}.html"
 		sitelist+="$pg
 "
 	done
@@ -54,7 +54,6 @@ html_headers="<!DOCTYPE html>
 "
 html_footers="	</body>
 </html>"
-
 
 # Create sites' contents and the sites themseleves:
 linked=""		# keep sites with incoming links here
@@ -81,13 +80,13 @@ $out_links
 		echo "  Creating page $site_name with $m lines starting at line $k of \"$2\" ..."
 		steps=$(($f + $q))
 		for st in $(seq 1 "$steps"); do
-			# add "m/(f+q)" lines to site_text, appending <br> for visibility reasons:
+			# add "m/(f+q)" lines to site_text, appending <br> for visibility:
 			site_text+=$(sed -n "$sd1","$sd2"p "$2")
 				### | sed 's/$/<br>/'	
 			sd1=$(($sd2 + 1))
 			((sd2 += $inc))
 			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")		# add one link after
-			site_text+="<a href=\"$line_link\">link${link_index}_text</a>
+			site_text+="<a href=\"..$line_link\">link${link_index}_text</a>
 "
 			echo "    Adding link to $line_link"
 			((link_index ++))
