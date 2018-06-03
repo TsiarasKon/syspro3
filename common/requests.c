@@ -76,7 +76,7 @@ char *generateResponseString(int response, FILE *fp) {
             return NULL;
     }
     char *cont_len;
-    asprintf(&cont_len, "Content-Length: %ld", strlen(content));
+    asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);
     char *responseString;
     asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header, date, server, cont_len, cont_type, conn, content);
     free(date);
@@ -113,29 +113,6 @@ long getContentLength(char *request) {
     return -1;
 }
 
-
-char *fileToString(FILE *fp) {
-    // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
-    if (fp == NULL) {
-        fprintf(stderr, "fileToString() with empty file.");
-        return NULL;
-    }
-    char *buffer = 0;
-    long length;
-    fseek(fp, 0, SEEK_END);
-    length = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    buffer = malloc((size_t) length + 1);
-    if (buffer == NULL) {
-        perror("malloc in fileToString");
-        return NULL;
-    }
-    fread(buffer, 1, (size_t) length, fp);
-    buffer[length] = '\0';
-    return buffer;
-}
-
-
 StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port) {
     char *content_ptr = *content;
     StringList *content_links = createStringList();
@@ -160,4 +137,26 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
         i++;
     }
     return content_links;
+}
+
+
+char *fileToString(FILE *fp) {
+    // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
+    if (fp == NULL) {
+        fprintf(stderr, "fileToString() with empty file.");
+        return NULL;
+    }
+    char *buffer = 0;
+    long length;
+    fseek(fp, 0, SEEK_END);
+    length = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    buffer = malloc((size_t) length + 1);
+    if (buffer == NULL) {
+        perror("malloc in fileToString");
+        return NULL;
+    }
+    fread(buffer, 1, (size_t) length, fp);
+    buffer[length] = '\0';
+    return buffer;
 }

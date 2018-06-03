@@ -14,9 +14,8 @@ char *generateResponseString(int response, FILE *fp);
 
 int endOfRequest(char const *request);
 long getContentLength(char *request);
+StringList *retrieveLinks(char **content, char *hostaddr, int server_port);
 
 char *fileToString(FILE *fp);
-
-StringList *retrieveLinks(char **content, char *hostaddr, int server_port);
 
 #endif

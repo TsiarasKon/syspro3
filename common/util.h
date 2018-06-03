@@ -19,5 +19,4 @@ enum ErrorCodes {
 char* getTimeRunning(struct timeval start_time);
 char* getHTTPDate();
 
-
 #endif

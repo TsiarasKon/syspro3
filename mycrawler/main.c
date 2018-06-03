@@ -15,9 +15,9 @@
 #include <limits.h>
 #include <sys/wait.h>
 #include <ctype.h>
-#include "util.h"
-#include "lists.h"
-#include "requests.h"
+#include "../common/util.h"
+#include "../common/lists.h"
+#include "../common/requests.h"
 
 #define CMD_LISTEN_QUEUE_SIZE 5
 #define WORKERS_NUM 5
@@ -39,7 +39,7 @@ pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_downloaded = 0;
 long bytes_downloaded = 0;
 
-// Link Lists:
+// Link lists:
 StringList *waitingLinkList;
 StringList *visitedLinkList;
 pthread_mutex_t linkList_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -54,9 +54,10 @@ pthread_mutex_t dirfile_mutex = PTHREAD_MUTEX_INITIALIZER;
 // Function prototypes:
 char *acquireLink();
 void appendToLinkList(StringList *list);
+void updateStats(long new_bytes_downloaded);
+int mkdir_path(char *linkpath);
 int command_handler(int cmdsock);
 void *crawler_thread(void *args);
-int mkdir_path(char *linkpath);
 
 volatile int thread_alive = 1;
 volatile int crawler_alive = 1;
@@ -306,6 +307,41 @@ void appendToLinkList(StringList *list) {
     }
 }
 
+void updateStats(long new_bytes_downloaded) {
+    pthread_mutex_lock(&stats_mutex);
+    pages_downloaded++;
+    bytes_downloaded += new_bytes_downloaded;
+    pthread_mutex_unlock(&stats_mutex);
+}
+
+int mkdir_path(char *linkpath) {         // recursively create all directories in link path
+    struct stat st = {0};
+    char full_path[PATH_MAX] = "";
+    char *curr_dir_save = NULL;
+    char *curr_dir = strtok_r(linkpath, "/", &curr_dir_save);
+    while (curr_dir != NULL) {
+        if (strchr(curr_dir, '.') != NULL) {    // path contains '.' - probably an .html file and not a dir
+            break;
+        }
+        strcat(full_path, curr_dir);
+        strcat(full_path, "/");
+        if (stat(full_path, &st) < 0) {
+            if (mkdir(full_path, DIRPERMS) < 0) {
+                perror("mkdir");
+                return EC_DIR;
+            }
+        }
+        curr_dir = strtok_r(NULL, "/", &curr_dir_save);
+    }
+    // Append full dir path to dirfile:
+    pthread_mutex_lock(&dirfile_mutex);
+    if (!existsInStringList(dirfileList, full_path)) {
+        appendStringListNode(dirfileList, full_path);
+    }
+    pthread_mutex_unlock(&dirfile_mutex);
+    return 0;
+}
+
 int command_handler(int cmdsock) {
     char command[BUFSIZ];        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
@@ -396,13 +432,6 @@ int command_handler(int cmdsock) {
     }
     close(cmdsock);
     return EC_OK;
-}
-
-void updateStats(long new_bytes_downloaded) {
-    pthread_mutex_lock(&stats_mutex);
-    pages_downloaded++;
-    bytes_downloaded += new_bytes_downloaded;
-    pthread_mutex_unlock(&stats_mutex);
 }
 
 void *crawler_thread(void *args) {
@@ -529,30 +558,4 @@ void *crawler_thread(void *args) {
     return NULL;
 }
 
-int mkdir_path(char *linkpath) {         // recursively create all directories in link path
-    struct stat st = {0};
-    char full_path[PATH_MAX] = "";
-    char *curr_dir_save = NULL;
-    char *curr_dir = strtok_r(linkpath, "/", &curr_dir_save);
-    while (curr_dir != NULL) {
-        if (strchr(curr_dir, '.') != NULL) {    // path contains '.' - probably an .html file and not a dir
-            break;
-        }
-        strcat(full_path, curr_dir);
-        strcat(full_path, "/");
-        if (stat(full_path, &st) < 0) {
-            if (mkdir(full_path, DIRPERMS) < 0) {
-                perror("mkdir");
-                return EC_DIR;
-            }
-        }
-        curr_dir = strtok_r(NULL, "/", &curr_dir_save);
-    }
-    // Append full dir path to dirfile:
-    pthread_mutex_lock(&dirfile_mutex);
-    if (!existsInStringList(dirfileList, full_path)) {
-        appendStringListNode(dirfileList, full_path);
-    }
-    pthread_mutex_unlock(&dirfile_mutex);
-    return 0;
-}
+

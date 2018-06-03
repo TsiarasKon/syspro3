@@ -1,29 +1,33 @@
-OBJS 	= main.o requests.o lists.o util.o
-SOURCE	= main.c requests.c lists.c util.c
-HEADER  = requests.h lists.h util.h
+COMMON 			= ../common
+COMMON_HEADERS  = $(COMMON)/requests.h $(COMMON)/lists.h $(COMMON)/util.h
+COMMON_OBJS		= $(COMMON)/requests.o $(COMMON)/lists.o $(COMMON)/util.o
+COMMON_SOURCE	= $(COMMON)/requests.c $(COMMON)/lists.c $(COMMON)/util.c
+
+OBJS 	= main.o 
+SOURCE	= main.c 
 OUT  	= mycrawler
 CC		= gcc
 FLAGS   = -g3 -c -pedantic -std=c99 -Wall
 LIB 	= -lpthread
 
-mycrawler: $(OBJS)
-	$(CC) -g3 $(OBJS) -o $(OUT) $(LIB)
+mycrawler: $(OBJS) $(COMMON_OBJS) $(COMMON_HEADERS) 
+	$(CC) -g3 $(OBJS) $(COMMON_OBJS) -o $(OUT) $(LIB)
 
-main.o: main.c
+main.o: main.c $(COMMON_HEADERS)
 	$(CC) $(FLAGS) main.c $(LIB)
 
-requests.o: requests.c
-	$(CC) $(FLAGS) requests.c
+requests.o: $(COMMON)/requests.c $(COMMON_HEADERS)
+	$(CC) $(FLAGS) $(COMMON)/requests.c
 
-lists.o: lists.c
-	$(CC) $(FLAGS) lists.c
+lists.o: $(COMMON)/lists.c $(COMMON_HEADERS)
+	$(CC) $(FLAGS) $(COMMON)/lists.c
 
-util.o: util.c
-	$(CC) $(FLAGS) util.c
+util.o: $(COMMON)/util.c $(COMMON_HEADERS)
+	$(CC) $(FLAGS) $(COMMON)/util.c
 
 
 clean:
-	rm -f $(OBJS) $(OUT)
+	rm -f $(OBJS) $(COMMON_OBJS) $(OUT)
 
 count:
-	wc $(SOURCE) $(HEADER)
+	wc $(SOURCE) $(COMMON_SOURCE) $(HEADER) $(COMMON_HEADERS)

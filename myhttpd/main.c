@@ -11,8 +11,9 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
-#include "util.h"
-#include "requests.h"
+#include "../common/util.h"
+#include "../common/lists.h"
+#include "../common/requests.h"
 
 #define CMD_LISTEN_QUEUE_SIZE 5
 #define CLIENT_LISTEN_QUEUE_SIZE 256
@@ -25,38 +26,23 @@ pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
 int pages_served = 0;
 long bytes_served = 0;
 
+// File descriptor list:
 IntList *fdList;
 pthread_mutex_t fdList_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t fdList_cond;
+
+// Function prototypes:
+int acquireFd();
+void appendToFdList(int fd);
+void updateStats(long new_bytes_served);
+int command_handler(int cmdsock);
+void *connection_handler(void *args);
 
 volatile int thread_alive = 1;
 volatile int server_alive = 1;
 
 void server_killer(int signum) {
     server_alive = 0;
-}
-
-int command_handler(int cmdsock);
-void *connection_handler(void *args);
-
-int acquireFd() {
-    pthread_mutex_lock(&fdList_mutex);
-    while (isIntListEmpty(fdList) && thread_alive) {
-        pthread_cond_wait(&fdList_cond, &fdList_mutex);
-    }
-    int fd = popIntListNode(fdList);
-    pthread_mutex_unlock(&fdList_mutex);
-    if (! isIntListEmpty(fdList)) {
-        pthread_cond_broadcast(&fdList_cond);
-    }
-    return fd;
-}
-
-void appendToFdList(int fd) {
-    pthread_mutex_lock(&fdList_mutex);
-    appendIntListNode(fdList, fd);
-    pthread_mutex_unlock(&fdList_mutex);
-    pthread_cond_broadcast(&fdList_cond);
 }
 
 int main(int argc, char *argv[]) {
@@ -249,6 +235,26 @@ int command_handler(int cmdsock) {
     return EC_OK;
 }
 
+int acquireFd() {
+    pthread_mutex_lock(&fdList_mutex);
+    while (isIntListEmpty(fdList) && thread_alive) {
+        pthread_cond_wait(&fdList_cond, &fdList_mutex);
+    }
+    int fd = popIntListNode(fdList);
+    pthread_mutex_unlock(&fdList_mutex);
+    if (! isIntListEmpty(fdList)) {
+        pthread_cond_broadcast(&fdList_cond);
+    }
+    return fd;
+}
+
+void appendToFdList(int fd) {
+    pthread_mutex_lock(&fdList_mutex);
+    appendIntListNode(fdList, fd);
+    pthread_mutex_unlock(&fdList_mutex);
+    pthread_cond_broadcast(&fdList_cond);
+}
+
 void updateStats(long new_bytes_served) {
     pthread_mutex_lock(&stats_mutex);
     pages_served++;
@@ -292,7 +298,7 @@ void *connection_handler(void *args) {
         if (rv > 0) {    // Fatal Error
             return (void *) EC_MEM;
         } else if (rv < 0) {
-            responseString = createResponseString(HTTP_BADREQUEST, NULL);
+            responseString = generateResponseString(HTTP_BADREQUEST, NULL);
             printf("Thread %lu: Received a request.\n", self_id);
             printf("Thread %lu: Responded with \"400 Bad Request\".\n", self_id);
         } else {    // valid request
@@ -302,14 +308,14 @@ void *connection_handler(void *args) {
             FILE *fp = fopen(requested_file_path, "r");
             if (fp == NULL) {       // failed to open file
                 if (errno == EACCES) {      // failed with "Permission denied"
-                    responseString = createResponseString(HTTP_FORBIDDEN, NULL);
+                    responseString = generateResponseString(HTTP_FORBIDDEN, NULL);
                     printf("Thread %lu: Responded with \"403 Forbidden\".\n", self_id);
                 } else {      // file doesn't exist
-                    responseString = createResponseString(HTTP_NOTFOUND, NULL);
+                    responseString = generateResponseString(HTTP_NOTFOUND, NULL);
                     printf("Thread %lu: Responded with \"404 Not Found\".\n", self_id);
                 }
             } else {
-                responseString = createResponseString(HTTP_OK, fp);
+                responseString = generateResponseString(HTTP_OK, fp);
                 printf("Thread %lu: Responded with \"200 OK\".\n", self_id);
                 fclose(fp);
                 curr_bytes_served = strlen(responseString);
