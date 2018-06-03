@@ -29,7 +29,7 @@ int validateGETRequest(char *request, char **requested_file) {
         return -1;
     }
     while ((curr_line = strtok_r(NULL, "\r\n", &curr_line_save)) != NULL) {
-        /// Possible future feature: checking other fields as well
+        /// TODO feature: checking other fields as well
         if (strlen(curr_line) > 6 && !strncmp(curr_line, "Host: ", 6)) {      // found host
             return 0;
         }
@@ -147,18 +147,24 @@ StringList *retrieveLinks(char ** const content, char *hostaddr, int server_port
     while (content_ptr[i] != '\0') {
         if (!strncmp(content_ptr + i, "<a href=\"", 9)) {
             i += 9;
-            char new_link[PATH_MAX];        // link len won't be larger than PATH_MAX
+            char new_link[PATH_MAX] = "";        // link len won't be larger than PATH_MAX
             sprintf(new_link, "http://%s:%d", hostaddr, server_port);
+            int j = (int) strlen(new_link);
             while (content_ptr[i] == '.') {     // skip '..' if root relative (as expected)
                 i++;
             }
-            int j = (int) strlen(new_link);
-            while (content_ptr[i] != '\0' && content_ptr[i] != '\"') {
+//            printf("~~");
+//            for (int k = i; k < i + 24; k++) {
+//                printf("%c", content_ptr[k]);
+//            }
+//            printf("~~\n");
+            while (content_ptr[i] != '\0' && content_ptr[i] != '"') {
                 new_link[j] = content_ptr[i];
                 j++;
                 i++;
             }
             new_link[j] = '\0';
+            printf("||%s||\n", new_link);
             appendStringListNode(content_links, new_link);
         }
         i++;
@@ -174,11 +180,21 @@ char *fileToString(FILE *fp) {
         return NULL;
     }
     char *buffer = 0;
-    long length;
-    fseek(fp, 0, SEEK_END);
+    long length = 0;
+    if (fseek(fp, 0, SEEK_END)) {
+        perror("fseek");
+        return NULL;
+    }
     length = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    buffer = malloc((size_t) length + 1);
+    if (length == -1L) {
+        perror("ftell");
+        return NULL;
+    }
+    if (fseek(fp, 0, SEEK_SET)) {
+        perror("fseek");
+        return NULL;
+    }
+    buffer = malloc((size_t) length);
     if (buffer == NULL) {
         perror("malloc in fileToString");
         return NULL;

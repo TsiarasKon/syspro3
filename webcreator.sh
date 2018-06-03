@@ -81,8 +81,7 @@ $out_links
 		steps=$(($f + $q))
 		for st in $(seq 1 "$steps"); do
 			# add "m/(f+q)" lines to site_text, appending <br> for visibility:
-			site_text+=$(sed -n "$sd1","$sd2"p "$2")
-				### | sed 's/$/<br>/'	
+			site_text+=$(sed -n "$sd1","$sd2"p "$2" | sed 's/$/<br>/')
 			sd1=$(($sd2 + 1))
 			((sd2 += $inc))
 			line_link=$(sed -n "$link_index {p;q;}" <<< "$page_links")		# add one link after

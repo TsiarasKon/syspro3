@@ -166,6 +166,14 @@ int main(int argc, char *argv[]) {
     pfds[1].events = POLLIN;
     int newfd;
     while (server_alive && !rv) {
+        for (int i = 0; i < thread_num; i++) {
+            if (!pthread_tryjoin_np(pt_ids[i], NULL)) {         // successfully joined with thread i
+                if (pthread_create(&pt_ids[i], NULL, connection_handler, NULL)) {   // recreate thread i
+                    perror("pthread_create");
+                    rv = EC_THREAD;
+                }
+            }
+        }
         if (poll(pfds, 2, -1) < 0) {
             if (errno == EINTR) {       // killing signal arrived
                 break;
@@ -198,7 +206,7 @@ int main(int argc, char *argv[]) {
         pthread_join(pt_ids[i], NULL);
     }
     pthread_cond_destroy(&fdList_cond);
-    deleteIntList(&fdList);
+    destroyIntList(&fdList);
     printf("Main thread has exited.\n");
     return rv;
 }
@@ -209,7 +217,8 @@ int command_handler(int cmdsock) {
         perror("Error reading from socket");
         return EC_SOCK;
     }
-    strtok(command, "\r\n");
+    char *command_save;
+    strtok_r(command, "\r\n", &command_save);            // remove trailing newline
     if (!strcmp(command, "STATS")) {
         printf("Main thread: Received STATS command.\n");
         char *timeRunning, *stats_response;
@@ -263,7 +272,7 @@ void updateStats(long new_bytes_served) {
 }
 
 void *connection_handler(void *args) {
-    /// TODO: timeout
+    /// TODO feature: thread timeout
     pthread_t self_id = pthread_self();
     printf("Thread %lu created.\n", self_id);
     while (thread_alive) {
@@ -323,7 +332,7 @@ void *connection_handler(void *args) {
             free(requested_file_path);
         }
         free(requested_file);
-        if (write(sock, responseString, strlen(responseString) + 1) < 0) {      /// +1 ?
+        if (write(sock, responseString, strlen(responseString) + 1) < 0) {
             perror("Error writing to socket");
             return (void *) EC_SOCK;
         }

@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     while ((option = getopt(argc, argv, "h:p:c:t:d")) != -1) {
         switch (option) {
             case 'h':
-                hostaddr = argv[optind - 1];        ///
+                hostaddr = argv[optind - 1];
                 break;
             case 'p':
                 server_port = atoi(optarg);
@@ -193,6 +193,14 @@ int main(int argc, char *argv[]) {
 
     int newfd;
     while (crawler_alive && !rv) {
+        for (int i = 0; i < thread_num; i++) {
+            if (!pthread_tryjoin_np(pt_ids[i], NULL)) {         // successfully joined with thread i
+                if (pthread_create(&pt_ids[i], NULL, crawler_thread, NULL)) {   // recreate thread i
+                    perror("pthread_create");
+                    rv = EC_THREAD;
+                }
+            }
+        }
         if ((newfd = accept(commandsock, commandptr, &command_len)) < 0) {
             if (errno == EINTR) {       // killing signal arrived
                 break;
@@ -354,7 +362,8 @@ int command_handler(int cmdsock) {
         perror("Error reading from socket");
         return EC_SOCK;
     }
-    strtok(command, "\r\n");            // remove trailing newline
+    char *command_save;
+    strtok_r(command, "\r\n", &command_save);            // remove trailing newline
     if (!strcmp(command, "STATS")) {
         printf("Main thread: Received STATS command.\n");
         char *timeRunning, *stats_response;
@@ -447,7 +456,7 @@ int command_handler(int cmdsock) {
 }
 
 void *crawler_thread(void *args) {
-    /// TODO: timeout
+    /// TODO feature: thread timeout
     pthread_t self_id = pthread_self();
     printf("Thread %lu created.\n", self_id);
     while (thread_alive) {
@@ -464,11 +473,23 @@ void *crawler_thread(void *args) {
         }
         struct sockaddr_in server;
         struct sockaddr *serverptr = (struct sockaddr *) &server;
-        struct hostent *hent;
-        if ((hent = gethostbyname(hostaddr)) == NULL) {
+        struct hostent hbuf, *hent;
+        int rv, err;
+        size_t temp_buf_len = BUFSIZ;
+        char *temp_buf = malloc(temp_buf_len);
+        while ((rv = gethostbyname_r(hostaddr, &hbuf, temp_buf, temp_buf_len, &hent, &err)) == ERANGE) {
+            temp_buf_len *= 2;
+            temp_buf = realloc(temp_buf, temp_buf_len);
+            if (temp_buf == NULL) {
+                perror("realloc");
+                return (void *) EC_MEM;
+            }
+        }
+        if (rv || hent == NULL) {
             perror("gethostbyname");
             return (void *) EC_SOCK;
         }
+        free(temp_buf);
         server.sin_family = AF_INET;
         memcpy(&server.sin_addr, hent->h_addr, (size_t) hent->h_length);
         server.sin_port = htons((uint16_t) server_port);
@@ -512,13 +533,14 @@ void *crawler_thread(void *args) {
             printf("Thread %lu: Failed to GET '%s'\n", self_id, link);
             free(link_ptr);
             free(msg_buf);
+            close(serversock);
             continue;
         }
         long content_len = getContentLength(msg_buf);
         if (content_len < 0) {
             continue;
         }
-        char *content = malloc((size_t) content_len);
+        char *content = malloc((size_t) content_len + 1);
         if (content == NULL) {
             perror("malloc in content");
             return (void *) EC_MEM;
@@ -537,13 +559,13 @@ void *crawler_thread(void *args) {
             }
         } while (bytes_read > 0);
 
-        char link_path[PATH_MAX];
+        char link_path[PATH_MAX] = "";
         if (link[0] == '/') {
             sprintf(link_path, "%s%s", save_dir, link);
         } else {
             sprintf(link_path, "%s/%s", save_dir, link);
         }
-        char link_path_copy[PATH_MAX];
+        char link_path_copy[PATH_MAX] = "";
         strcpy(link_path_copy, link_path);
         if (mkdir_path(link_path_copy)) {
             return (void *) EC_DIR;

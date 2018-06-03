@@ -81,69 +81,95 @@ CMakeFiles/myhttpd.dir/main.c.o.provides: CMakeFiles/myhttpd.dir/main.c.o.requir
 CMakeFiles/myhttpd.dir/main.c.o.provides.build: CMakeFiles/myhttpd.dir/main.c.o
 
 
-CMakeFiles/myhttpd.dir/util.c.o: CMakeFiles/myhttpd.dir/flags.make
-CMakeFiles/myhttpd.dir/util.c.o: ../util.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/myhttpd.dir/util.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/myhttpd.dir/util.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o: CMakeFiles/myhttpd.dir/flags.make
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o: /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c
 
-CMakeFiles/myhttpd.dir/util.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/myhttpd.dir/util.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c > CMakeFiles/myhttpd.dir/util.c.i
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c > CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.i
 
-CMakeFiles/myhttpd.dir/util.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/myhttpd.dir/util.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/util.c -o CMakeFiles/myhttpd.dir/util.c.s
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c -o CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.s
 
-CMakeFiles/myhttpd.dir/util.c.o.requires:
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires:
 
-.PHONY : CMakeFiles/myhttpd.dir/util.c.o.requires
+.PHONY : CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires
 
-CMakeFiles/myhttpd.dir/util.c.o.provides: CMakeFiles/myhttpd.dir/util.c.o.requires
-	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/util.c.o.provides.build
-.PHONY : CMakeFiles/myhttpd.dir/util.c.o.provides
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires
+	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides.build
+.PHONY : CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides
 
-CMakeFiles/myhttpd.dir/util.c.o.provides.build: CMakeFiles/myhttpd.dir/util.c.o
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.provides.build: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
 
 
-CMakeFiles/myhttpd.dir/requests.c.o: CMakeFiles/myhttpd.dir/flags.make
-CMakeFiles/myhttpd.dir/requests.c.o: ../requests.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/myhttpd.dir/requests.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/myhttpd.dir/requests.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o: CMakeFiles/myhttpd.dir/flags.make
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o: /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c
 
-CMakeFiles/myhttpd.dir/requests.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/myhttpd.dir/requests.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c > CMakeFiles/myhttpd.dir/requests.c.i
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c > CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.i
 
-CMakeFiles/myhttpd.dir/requests.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/myhttpd.dir/requests.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/requests.c -o CMakeFiles/myhttpd.dir/requests.c.s
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c -o CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.s
 
-CMakeFiles/myhttpd.dir/requests.c.o.requires:
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires:
 
-.PHONY : CMakeFiles/myhttpd.dir/requests.c.o.requires
+.PHONY : CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires
 
-CMakeFiles/myhttpd.dir/requests.c.o.provides: CMakeFiles/myhttpd.dir/requests.c.o.requires
-	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/requests.c.o.provides.build
-.PHONY : CMakeFiles/myhttpd.dir/requests.c.o.provides
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires
+	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides.build
+.PHONY : CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides
 
-CMakeFiles/myhttpd.dir/requests.c.o.provides.build: CMakeFiles/myhttpd.dir/requests.c.o
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.provides.build: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+
+
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o: CMakeFiles/myhttpd.dir/flags.make
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o: /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o   -c /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c
+
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c > CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.i
+
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c -o CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.s
+
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires:
+
+.PHONY : CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires
+
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires
+	$(MAKE) -f CMakeFiles/myhttpd.dir/build.make CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides.build
+.PHONY : CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides
+
+CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.provides.build: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
 
 
 # Object files for target myhttpd
 myhttpd_OBJECTS = \
 "CMakeFiles/myhttpd.dir/main.c.o" \
-"CMakeFiles/myhttpd.dir/util.c.o" \
-"CMakeFiles/myhttpd.dir/requests.c.o"
+"CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o" \
+"CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o" \
+"CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o"
 
 # External object files for target myhttpd
 myhttpd_EXTERNAL_OBJECTS =
 
 myhttpd: CMakeFiles/myhttpd.dir/main.c.o
-myhttpd: CMakeFiles/myhttpd.dir/util.c.o
-myhttpd: CMakeFiles/myhttpd.dir/requests.c.o
+myhttpd: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o
+myhttpd: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o
+myhttpd: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o
 myhttpd: CMakeFiles/myhttpd.dir/build.make
 myhttpd: CMakeFiles/myhttpd.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking C executable myhttpd"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/myhttpd/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C executable myhttpd"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/myhttpd.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -152,8 +178,9 @@ CMakeFiles/myhttpd.dir/build: myhttpd
 .PHONY : CMakeFiles/myhttpd.dir/build
 
 CMakeFiles/myhttpd.dir/requires: CMakeFiles/myhttpd.dir/main.c.o.requires
-CMakeFiles/myhttpd.dir/requires: CMakeFiles/myhttpd.dir/util.c.o.requires
-CMakeFiles/myhttpd.dir/requires: CMakeFiles/myhttpd.dir/requests.c.o.requires
+CMakeFiles/myhttpd.dir/requires: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/util.c.o.requires
+CMakeFiles/myhttpd.dir/requires: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/requests.c.o.requires
+CMakeFiles/myhttpd.dir/requires: CMakeFiles/myhttpd.dir/home/ch0sen/Desktop/MyProjects/Syspro/syspro3/common/lists.c.o.requires
 
 .PHONY : CMakeFiles/myhttpd.dir/requires
 

@@ -18,7 +18,7 @@ int isStringListEmpty(StringList *list) {
     return (list == NULL || list->first == NULL);
 }
 
-int existsInStringList(StringList *list, char *string) {
+int existsInStringList(StringList *list, char * const string) {
     if (list != NULL) {
         StringListNode *current = list->first;
         while (current != NULL) {
@@ -177,7 +177,7 @@ int popIntListNode(IntList *list) {
     return x;
 }
 
-void deleteIntList(IntList **list) {        /// after merge refactor: destroy
+void destroyIntList(IntList **list) {
     if (*list == NULL) {
         fprintf(stderr, "Attempted to delete a NULL IntList.\n");
         return;

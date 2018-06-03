@@ -39,6 +39,6 @@ IntList* createIntList();
 int isIntListEmpty(IntList *list);
 int appendIntListNode(IntList *list, int x);
 int popIntListNode(IntList *list);
-void deleteIntList(IntList **list);
+void destroyIntList(IntList **list);
 
 #endif
