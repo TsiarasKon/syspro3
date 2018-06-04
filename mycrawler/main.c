@@ -24,7 +24,7 @@
 #define DIRPERMS (S_IRWXU | S_IRWXG)        // default 0660
 
 // Needed global variables:
-char *save_dir = NULL;
+char save_dir[PATH_MAX] = "";
 char *hostaddr = NULL;
 int server_port = -1;
 int thread_num = -1;
@@ -95,15 +95,15 @@ int main(int argc, char *argv[]) {
                 thread_num = atoi(optarg);
                 break;
             case 'd':
-                save_dir = argv[optind];
+                realpath(argv[optind], save_dir);
                 break;
             default:
-                fprintf(stderr, "Invalid arguments. Please run \"$ ./jobExecutor -d dirfile -w numWorkers\"\n");
+                fprintf(stderr, "Invalid arguments. Please run \"$ ./mycrawler -h host_or_IP -p port -c command_port -t num_of_threads -d save_dir starting_URL\"\n");
                 return EC_ARG;
         }
     }
-    if (hostaddr == NULL || server_port <= 0 || command_port <= 0 || thread_num <= 0 || save_dir == NULL || starting_URL == NULL) {
-        fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
+    if (hostaddr == NULL || server_port <= 0 || command_port <= 0 || thread_num <= 0 || !strcmp(save_dir, "") || starting_URL == NULL) {
+        fprintf(stderr, "Invalid arguments. Please run \"$ ./mycrawler -h host_or_IP -p port -c command_port -t num_of_threads -d save_dir starting_URL\"\n");
         return EC_ARG;
     }
     if (server_port == command_port) {
@@ -268,7 +268,7 @@ char *acquireLink() {
         // At this point all threads will have finished, no need to access dirfileList via mutex
         StringListNode *current = dirfileList->first;
         while (current != NULL) {
-            fprintf(dirfp, "../mycrawler/%s\n", current->string);
+            fprintf(dirfp, "%s\n", current->string);
             current = current->next;
         }
         fclose(dirfp);
@@ -290,7 +290,14 @@ char *acquireLink() {
             close(to_JE[0]);
             dup2(from_JE[1], STDOUT_FILENO);
             close(from_JE[1]);
-            execv("../jobExecutor/jobExecutor", jobExecutor_argv);
+            // Locate where jobExecutor is and execute it:
+            char curr_dir[PATH_MAX];
+            getcwd(curr_dir, PATH_MAX);
+            if (!strcmp(strrchr(curr_dir, '/'), "/mycrawler")) {    // if run from "/mycrawler" dir
+                execv("../jobExecutor/jobExecutor", jobExecutor_argv);
+            } else {        // if from project top-level dir
+                execv("./jobExecutor/jobExecutor", jobExecutor_argv);
+            }
             exit(EC_CHILD);      // Only if execv() failed
         } else {
             close(to_JE[0]);
@@ -333,7 +340,7 @@ void updateStats(long new_bytes_downloaded) {
 
 int mkdir_path(char *linkpath) {         // recursively create all directories in link path
     struct stat st = {0};
-    char full_path[PATH_MAX] = "";
+    char full_path[PATH_MAX] = "/";
     char *curr_dir_save = NULL;
     char *curr_dir = strtok_r(linkpath, "/", &curr_dir_save);
     while (curr_dir != NULL) {
@@ -348,6 +355,7 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
                 return EC_DIR;
             }
         }
+        memset(&st, 0, sizeof(struct stat));
         curr_dir = strtok_r(NULL, "/", &curr_dir_save);
     }
     // Append full dir path to dirfileList:
@@ -361,7 +369,7 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
 
 int command_handler(int cmdsock) {
     /// TODO feature: thread timeout
-    char command[BUFSIZ];        // Undoubtedly fits a single command
+    char command[BUFSIZ] = "";        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
         perror("Error reading from socket");
         close(cmdsock);
@@ -504,6 +512,7 @@ void *crawler_thread(void *args) {
         }
         server.sin_family = AF_INET;
         memcpy(&server.sin_addr, hent->h_addr, (size_t) hent->h_length);
+        free(temp_hbuf);
         server.sin_port = htons((uint16_t) server_port);
         if (connect(serversock, serverptr, sizeof(server)) < 0) {
             perror("listen");
@@ -522,11 +531,11 @@ void *crawler_thread(void *args) {
         }
         free(request);
         char curr_buf[BUFSIZ] = "";
-        char *msg_buf = malloc(BUFSIZ);
+        char *msg_buf = malloc(1);
         msg_buf[0] = '\0';
         ssize_t bytes_read;
         int content_pos = 0;
-        do {        // read entire server response, reallocing if necessary
+        do {        // read at least the entire GET response, perhaps containing content
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(serversock, curr_buf, BUFSIZ);
             curr_buf[BUFSIZ - 1] = '\0';
@@ -546,7 +555,6 @@ void *crawler_thread(void *args) {
             free(link_ptr);
             free(msg_buf);
             close(serversock);
-            free(temp_hbuf);
             continue;
         }
         long content_len = getContentLength(msg_buf);
@@ -604,7 +612,6 @@ void *crawler_thread(void *args) {
         if (content_len > 0) {
             updateStats(content_len);
         }
-        free(temp_hbuf);
         close(serversock);
     }
     printf("Thread %lu has exited.\n", self_id);

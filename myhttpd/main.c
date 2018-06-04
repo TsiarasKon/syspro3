@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <limits.h>
 #include "../common/util.h"
 #include "../common/lists.h"
 #include "../common/requests.h"
@@ -18,7 +19,7 @@
 #define CMD_LISTEN_QUEUE_SIZE 5
 #define CLIENT_LISTEN_QUEUE_SIZE 256
 
-char *root_dir = NULL;
+char root_dir[PATH_MAX] = "";
 
 // Stats:
 struct timeval start_time;
@@ -76,14 +77,14 @@ int main(int argc, char *argv[]) {
                 thread_num = atoi(optarg);
                 break;
             case 'd':
-                root_dir = argv[optind];
+                realpath(argv[optind], root_dir);
                 break;
             default:
-                fprintf(stderr, "Invalid arguments. Please run \"$ ./jobExecutor -d docfile -w numWorkers\"\n");
+                fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
                 return EC_ARG;
         }
     }
-    if (serving_port <= 0 || command_port <= 0 || thread_num <= 0 || root_dir == NULL) {
+    if (serving_port <= 0 || command_port <= 0 || thread_num <= 0 || !strcmp(root_dir, "")) {
         fprintf(stderr, "Invalid arguments. Please run \"$ ./myhttpd -p serving_port -c command_port -t num_of_threads -d root_dir\"\n");
         return EC_ARG;
     }
@@ -248,7 +249,7 @@ void updateStats(long new_bytes_served) {
 
 int command_handler(int cmdsock) {
     /// TODO feature: thread timeout
-    char command[BUFSIZ];        // Undoubtedly fits a single command
+    char command[BUFSIZ] = "";        // Undoubtedly fits a single command
     if (read(cmdsock, command, BUFSIZ) < 0) {
         perror("Error reading from socket");
         return EC_SOCK;
@@ -291,7 +292,7 @@ void *connection_handler(void *args) {
         }
         long curr_bytes_served = 0;
         char curr_buf[BUFSIZ] = "";
-        char *msg_buf = malloc(BUFSIZ);
+        char *msg_buf = malloc(1);
         msg_buf[0] = '\0';
         ssize_t bytes_read;
         do {        // read entire GET request, reallocing if necessary
@@ -309,9 +310,14 @@ void *connection_handler(void *args) {
                 }
             }
         } while (bytes_read > 0);
+        if (!strcmp(msg_buf, "")) {
+            printf("Thread %lu: Client terminated the connection.\n", self_id);
+            free(msg_buf);
+            continue;
+        }
 
-        char *responseString;
-        char *requested_file;
+        char *responseString = NULL;
+        char *requested_file = NULL;
         int rv = validateGETRequest(msg_buf, &requested_file);
         if (rv > 0) {    // Fatal Error
             return (void *) EC_MEM;
@@ -321,8 +327,8 @@ void *connection_handler(void *args) {
             printf("Thread %lu: Responded with \"400 Bad Request\".\n", self_id);
         } else {    // valid request
             printf("Thread %lu: Received a request for \"%s\".\n", self_id, requested_file);
-            char *requested_file_path;
-            asprintf(&requested_file_path, "%s%s", root_dir, requested_file);
+            char requested_file_path[PATH_MAX];
+            sprintf(requested_file_path, "%s/%s", root_dir, requested_file);
             FILE *fp = fopen(requested_file_path, "r");
             if (fp == NULL) {       // failed to open file
                 if (errno == EACCES) {      // failed with "Permission denied"
@@ -338,9 +344,10 @@ void *connection_handler(void *args) {
                 fclose(fp);
                 curr_bytes_served = strlen(responseString);
             }
-            free(requested_file_path);
         }
-        free(requested_file);
+        if (requested_file != NULL) {
+            free(requested_file);
+        }
         if (write(sock, responseString, strlen(responseString) + 1) < 0) {
             perror("Error writing to socket");
             return (void *) EC_SOCK;

@@ -3,6 +3,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <string.h>
 #include "util.h"
 
 const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -37,6 +38,32 @@ char* getHTTPDate() {
     return time_str;
 }
 
+char *fileToString2(FILE *fp) {
+    if (fp == NULL) {
+        fprintf(stderr, "Attempted fileToString() with NULL file.");
+        return NULL;
+    }
+    char *filestring = malloc(1);
+    size_t filestringsize = 1;
+    filestring[0] = '\0';
+    char *linebuf = NULL;
+    size_t linebufsize = BUFSIZ;
+    while (getline(&linebuf, &linebufsize, fp) != -1) {
+        filestring = realloc(filestring, filestringsize + strlen(linebuf));
+        if (filestring == NULL) {
+            perror("realloc in fileToString");
+            return NULL;
+        }
+        strcpy(filestring + filestringsize - 1, linebuf);
+        filestringsize += strlen(linebuf);
+    }
+    if (linebuf != NULL) {
+        free(linebuf);
+    }
+    filestring[filestringsize - 1] = '\0';
+    return filestring;
+}
+
 char *fileToString(FILE *fp) {
     // Inspired from this snippet: https://stackoverflow.com/questions/174531/easiest-way-to-get-files-contents-in-c
     if (fp == NULL) {
@@ -58,7 +85,7 @@ char *fileToString(FILE *fp) {
         perror("fseek");
         return NULL;
     }
-    buffer = malloc((size_t) length);
+    buffer = malloc((size_t) length + 1);
     if (buffer == NULL) {
         perror("malloc in fileToString");
         return NULL;
