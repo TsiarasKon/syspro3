@@ -19,11 +19,21 @@ char* getTimeRunning(struct timeval start_time) {
     char *time_str;
     // "HH:MM:SS.ms" - HH and MM will only be printed if HH or either (respectively) is greater than 0
     if (timeRunning.tm_hour > 0) {
-        asprintf(&time_str, "%.2d:%.2d:%.2d.%.2lld", timeRunning.tm_hour, timeRunning.tm_min, timeRunning.tm_sec, (msRunning % 1000) / 10);
+        if (asprintf(&time_str, "%.2d:%.2d:%.2d.%.2lld", timeRunning.tm_hour, timeRunning.tm_min, timeRunning.tm_sec, \
+        (msRunning % 1000) / 10) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
     } else if (timeRunning.tm_min > 0) {
-        asprintf(&time_str, "%.2d:%.2d.%.2lld", timeRunning.tm_min, timeRunning.tm_sec, (msRunning % 1000) / 10);
+        if (asprintf(&time_str, "%.2d:%.2d.%.2lld", timeRunning.tm_min, timeRunning.tm_sec, (msRunning % 1000) / 10) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
     } else {
-        asprintf(&time_str, "%.2d.%.2lld", timeRunning.tm_sec, (msRunning % 1000) / 10);
+        if (asprintf(&time_str, "%.2d.%.2lld", timeRunning.tm_sec, (msRunning % 1000) / 10) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
     }
     return time_str;
 }
@@ -33,35 +43,12 @@ char* getHTTPDate() {
     struct tm *t;
     t = gmtime(&curr_time);
     char *time_str;
-    asprintf(&time_str, "Date: %s, %.2d %s %.4d %.2d:%.2d:%.2d GMT", days[t->tm_wday], t->tm_mday, months[t->tm_mon], \
-    t->tm_year + 1900, t->tm_hour, t->tm_min, t->tm_sec);
-    return time_str;
-}
-
-char *fileToString2(FILE *fp) {
-    if (fp == NULL) {
-        fprintf(stderr, "Attempted fileToString() with NULL file.");
+    if (asprintf(&time_str, "Date: %s, %.2d %s %.4d %.2d:%.2d:%.2d GMT", days[t->tm_wday], t->tm_mday, \
+    months[t->tm_mon], t->tm_year + 1900, t->tm_hour, t->tm_min, t->tm_sec) < 0) {
+        perror("asprintf");
         return NULL;
     }
-    char *filestring = malloc(1);
-    size_t filestringsize = 1;
-    filestring[0] = '\0';
-    char *linebuf = NULL;
-    size_t linebufsize = BUFSIZ;
-    while (getline(&linebuf, &linebufsize, fp) != -1) {
-        filestring = realloc(filestring, filestringsize + strlen(linebuf));
-        if (filestring == NULL) {
-            perror("realloc in fileToString");
-            return NULL;
-        }
-        strcpy(filestring + filestringsize - 1, linebuf);
-        filestringsize += strlen(linebuf);
-    }
-    if (linebuf != NULL) {
-        free(linebuf);
-    }
-    filestring[filestringsize - 1] = '\0';
-    return filestring;
+    return time_str;
 }
 
 char *fileToString(FILE *fp) {
@@ -94,3 +81,31 @@ char *fileToString(FILE *fp) {
     buffer[length] = '\0';
     return buffer;
 }
+
+/* // I attempted to recreate it using getline() but, as expected, it was noticably slower:
+char *fileToString2(FILE *fp) {
+    if (fp == NULL) {
+        fprintf(stderr, "Attempted fileToString() with NULL file.");
+        return NULL;
+    }
+    char *filestring = malloc(1);
+    size_t filestringsize = 1;
+    filestring[0] = '\0';
+    char *linebuf = NULL;
+    size_t linebufsize = BUFSIZ;
+    while (getline(&linebuf, &linebufsize, fp) != -1) {
+        filestring = realloc(filestring, filestringsize + strlen(linebuf));
+        if (filestring == NULL) {
+            perror("realloc in fileToString");
+            return NULL;
+        }
+        strcpy(filestring + filestringsize - 1, linebuf);
+        filestringsize += strlen(linebuf);
+    }
+    if (linebuf != NULL) {
+        free(linebuf);
+    }
+    filestring[filestringsize - 1] = '\0';
+    return filestring;
+}
+*/

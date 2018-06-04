@@ -14,23 +14,23 @@ CC		= gcc
 FLAGS   = -g3 -c -pedantic -std=c99 -Wall
 LIB 	= -lpthread
 
-mycrawler: $(OBJS) $(COMMON_OBJS) $(COMMON_HEADERS) jobExecutor
+mycrawler: $(OBJS) $(COMMON_OBJS) $(COMMON_HEADERS) $(COMMON_SOURCE) jobExecutor
 	$(CC) -g3 $(OBJS) $(COMMON_OBJS) -o $(OUT) $(LIB)
 
 .PHONY: jobExecutor
 jobExecutor:
 	cd $(JOBEX) && $(MAKE)
 
-main.o: main.c $(COMMON_HEADERS)
+main.o: main.c $(COMMON_HEADERS) $(COMMON_SOURCE)
 	$(CC) $(FLAGS) main.c $(LIB)
 
-requests.o: $(COMMON)/requests.c $(COMMON_HEADERS)
+requests.o: $(COMMON_HEADERS) $(COMMON_SOURCE)
 	$(CC) $(FLAGS) $(COMMON)/requests.c
 
-lists.o: $(COMMON)/lists.c $(COMMON_HEADERS)
+lists.o: $(COMMON_HEADERS) $(COMMON_SOURCE)
 	$(CC) $(FLAGS) $(COMMON)/lists.c
 
-util.o: $(COMMON)/util.c $(COMMON_HEADERS)
+util.o: $(COMMON_HEADERS) $(COMMON_SOURCE)
 	$(CC) $(FLAGS) $(COMMON)/util.c
 
 

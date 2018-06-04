@@ -3,10 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <time.h>
 #include <netinet/in.h>
 #include <pthread.h>
-#include <sys/ioctl.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -284,7 +282,10 @@ char *acquireLink() {
             close(to_JE[1]);
             close(from_JE[0]);
             char *workers_num;
-            asprintf(&workers_num, "%d", WORKERS_NUM);
+            if (asprintf(&workers_num, "%d", WORKERS_NUM) < 0) {
+                perror("asprintf");
+                return NULL;
+            }
             char *jobExecutor_argv[] = {"jobExecutor", "-d", dirfile, "-w", workers_num, NULL};
             dup2(to_JE[0], STDIN_FILENO);
             close(to_JE[0]);
@@ -370,7 +371,7 @@ int mkdir_path(char *linkpath) {         // recursively create all directories i
 int command_handler(int cmdsock) {
     /// TODO feature: thread timeout
     char command[BUFSIZ] = "";        // Undoubtedly fits a single command
-    if (read(cmdsock, command, BUFSIZ) < 0) {
+    if (read(cmdsock, command, BUFSIZ - 1) < 0) {
         perror("Error reading from socket");
         close(cmdsock);
         return EC_SOCK;
@@ -384,7 +385,11 @@ int command_handler(int cmdsock) {
         char *timeRunning, *stats_response;
         pthread_mutex_lock(&stats_mutex);
         timeRunning = getTimeRunning(start_time);
-        asprintf(&stats_response, " Server up for %s, downloaded %d pages, %ld bytes.\n", timeRunning, pages_downloaded, bytes_downloaded);
+        if (asprintf(&stats_response, " Server up for %s, downloaded %d pages, %ld bytes.\n", timeRunning, \
+        pages_downloaded, bytes_downloaded) < 0) {
+            perror("asprintf");
+            return EC_MEM;
+        }
         pthread_mutex_unlock(&stats_mutex);
         if (write(cmdsock, stats_response, strlen(stats_response) + 1) < 0) {
             perror("Error writing to socket");
@@ -457,7 +462,7 @@ int command_handler(int cmdsock) {
                         return EC_SOCK;
                     }
                 }
-                if (strchr(buffer, '<') != NULL) {      // Shouldn't be needed: Last resort in case we previously missed '<'
+                if (strchr(buffer, '<') != NULL) {    // Shouldn't be needed: Last resort in case we previously missed '<'
                     break;
                 }
             }
@@ -518,6 +523,7 @@ void *crawler_thread(void *args) {
         server.sin_port = htons((uint16_t) server_port);
         if (connect(serversock, serverptr, sizeof(server)) < 0) {
             perror("listen");
+            free(link_ptr);
             return (void *) EC_SOCK;
         }
 
@@ -539,7 +545,7 @@ void *crawler_thread(void *args) {
         long content_pos = 0;
         do {        // read at least the entire GET response, probably also containing content
             memset(&curr_buf[0], 0, sizeof(curr_buf));
-            bytes_read = read(serversock, curr_buf, BUFSIZ);
+            bytes_read = read(serversock, curr_buf, BUFSIZ - 1);
             curr_buf[BUFSIZ - 1] = '\0';
             if (bytes_read < 0) {
                 perror("Error reading from socket");
@@ -560,7 +566,7 @@ void *crawler_thread(void *args) {
             continue;
         }
         long content_len = getContentLength(msg_buf);
-        char *content = malloc((size_t) content_len + BUFSIZ + 1);      // + BUFSIZ so that read() won't ever complain
+        char *content = malloc((size_t) content_len + BUFSIZ);      // + BUFSIZ so that read() won't ever complain
         if (content == NULL) {
             perror("malloc in content");
             return (void *) EC_MEM;
@@ -570,7 +576,7 @@ void *crawler_thread(void *args) {
         free(msg_buf);
         content_pos = strlen(content);
         do {        // read entire server response (which is now known to fit in "content")
-            bytes_read = read(serversock, content + content_pos, BUFSIZ);
+            bytes_read = read(serversock, content + content_pos, BUFSIZ - 1);
             content_pos += bytes_read;
             strcat(content, "\0");
             if (bytes_read < 0) {
@@ -578,7 +584,6 @@ void *crawler_thread(void *args) {
                 return (void *) EC_SOCK;
             }
         } while (bytes_read > 0);
-//        printf("%s", content);
 
         char link_path[PATH_MAX] = "";
         if (link[0] == '/') {

@@ -40,50 +40,82 @@ int validateGETRequest(char *request, char **requested_file) {
 
 char *generateGETRequest(char *filename) {
     char *header;
-    asprintf(&header, "GET %s HTTP/1.1", filename);
+    if (asprintf(&header, "GET %s HTTP/1.1", filename) < 0) {
+        perror("asprintf");
+        return NULL;
+    }
     char host[] = "Host: localhost";
     char *request;
-    asprintf(&request, "%s\n%s\n\n", header, host);
+    if (asprintf(&request, "%s\n%s\n\n", header, host) < 0) {
+        perror("asprintf");
+        return NULL;
+    }
     free(header);
     return request;
 }
 
+const char header_OK[] = "HTTP/1.1 200 OK";
+const char header_BADREQUEST[] = "HTTP/1.1 400 Bad Request";
+const char header_FORBIDDEN[] = "HTTP/1.1 403 Forbidden";
+const char header_NOTFOUND[] = "HTTP/1.1 404 Not Found";
+const char msg_BADREQUEST[] = \
+"<!DOCTYPE html><html><body><h3>Your request was bad and you should feel bad.</h3></body></html>";
+const char msg_FORBIDDEN[] = \
+"<!DOCTYPE html><html><body><h3>You have no power here! No permissions, that is.</h3></body></html>";
+const char msg_NOTFOUND[] = \
+"<!DOCTYPE html><html><body><h3>Your file is in another castle. Or directory. Not sure.</h3></body></html>";
 const char server[] = "Server: myhttpd/1.0.0 (Ubuntu64)";
 const char cont_type[] = "Content-Type: text/html";
 const char conn[] = "Connection: Closed";
 
 char *generateResponseString(int response, FILE *fp) {
     char *date = getHTTPDate();
-    char *header, *content;
-    switch (response) {
-        case HTTP_OK:
-            asprintf(&header, "HTTP/1.1 200 OK");
-            content = fileToString(fp);
-            break;
-        case HTTP_BADREQUEST:
-            asprintf(&header, "HTTP/1.1 400 Bad Request");
-            asprintf(&content, "<html>Your request was bad and you should feel bad.</html>");
-            break;
-        case HTTP_FORBIDDEN:
-            asprintf(&header, "HTTP/1.1 403 Forbidden");
-            asprintf(&content, "<html>You have no power here! No permissions, that is.</html>");
-            break;
-        case HTTP_NOTFOUND:
-            asprintf(&header, "HTTP/1.1 404 Not Found");
-            asprintf(&content, "<html>Your file is in another castle. Or directory. Not sure.</html>");
-            break;
-        default:        // should never get here
-            free(date);
+    char *cont_len, *responseString;
+    if (response == HTTP_OK) {
+        char *content = fileToString(fp);
+        if (asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1) < 0) {
+            perror("asprintf");
             return NULL;
+        }
+        if (asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header_OK, date, server, cont_len, cont_type, \
+        conn, content) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
+        free(content);
+    } else if (response == HTTP_BADREQUEST) {
+        if (asprintf(&cont_len, "Content-Length: %ld", strlen(msg_BADREQUEST) + 1) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
+        if (asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header_BADREQUEST, date, server, cont_len, \
+        cont_type, conn, msg_BADREQUEST) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
+    } else if (response == HTTP_FORBIDDEN) {
+        if (asprintf(&cont_len, "Content-Length: %ld", strlen(msg_FORBIDDEN) + 1) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
+        if (asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header_FORBIDDEN, date, server, cont_len, \
+        cont_type, conn, msg_FORBIDDEN) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
+    } else {    // HTTP_NOTFOUND
+        if (asprintf(&cont_len, "Content-Length: %ld", strlen(msg_NOTFOUND) + 1) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
+        if (asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header_NOTFOUND, date, server, cont_len, \
+        cont_type, conn, msg_NOTFOUND) < 0) {
+            perror("asprintf");
+            return NULL;
+        }
     }
-    char *cont_len;
-    asprintf(&cont_len, "Content-Length: %ld", strlen(content) + 1);
-    char *responseString;
-    asprintf(&responseString, "%s\n%s\n%s\n%s\n%s\n%s\n\n%s", header, date, server, cont_len, cont_type, conn, content);
     free(date);
-    free(header);
     free(cont_len);
-    free(content);
     return responseString;
 }
 

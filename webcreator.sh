@@ -8,12 +8,12 @@ if [ ! -f "$2" ]; then
 	echo "text_file \"$2\" does not exist."
 	exit 1
 fi
-if ! [[ $3 =~ ^[1-9][0-9]*$ ]]; then		# regex for positive integer
-	echo "w must be a positive integer."
+if ! [[ $3 =~ ^([2-9]|[1-9][0-9]+)$ ]]; then		# regex for positive integer >1
+	echo "w must be a positive integer greater than 1."
 	exit 1
 fi
-if ! [[ $4 =~ ^[1-9][0-9]*$ ]]; then
-	echo "p must be a positive integer."
+if ! [[ $4 =~ ^([3-9]|[1-9][0-9]+)$ ]]; then		# regex for positive integer >2
+	echo "p must be a positive integer greater than 2."
 	exit 1
 fi
 lines_num=$(wc -l < "$2")

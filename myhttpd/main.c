@@ -3,11 +3,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <time.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <poll.h>
-#include <sys/ioctl.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -250,7 +248,7 @@ void updateStats(long new_bytes_served) {
 int command_handler(int cmdsock) {
     /// TODO feature: thread timeout
     char command[BUFSIZ] = "";        // Undoubtedly fits a single command
-    if (read(cmdsock, command, BUFSIZ) < 0) {
+    if (read(cmdsock, command, BUFSIZ - 1) < 0) {
         perror("Error reading from socket");
         return EC_SOCK;
     }
@@ -262,7 +260,10 @@ int command_handler(int cmdsock) {
         char *timeRunning, *stats_response;
         pthread_mutex_lock(&stats_mutex);
         timeRunning = getTimeRunning(start_time);
-        asprintf(&stats_response, " Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served);
+        if (asprintf(&stats_response, " Server up for %s, served %d pages, %ld bytes.\n", timeRunning, pages_served, bytes_served) < 0) {
+            perror("asprintf");
+            return EC_MEM;
+        }
         pthread_mutex_unlock(&stats_mutex);
         if (write(cmdsock, stats_response, strlen(stats_response) + 1) < 0) {
             perror("Error writing to socket");
@@ -298,7 +299,7 @@ void *connection_handler(void *args) {
         ssize_t bytes_read;
         do {        // read entire GET request, reallocing if necessary
             memset(&curr_buf[0], 0, sizeof(curr_buf));
-            bytes_read = read(sock, curr_buf, BUFSIZ);
+            bytes_read = read(sock, curr_buf, BUFSIZ - 1);
             curr_buf[BUFSIZ - 1] = '\0';
             if (bytes_read < 0) {
                 perror("Error reading from socket");
