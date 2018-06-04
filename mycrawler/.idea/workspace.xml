@@ -68,8 +68,8 @@
       <file leaf-file-name="main.c" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="424">
-              <caret line="549" column="17" lean-forward="true" selection-start-line="549" selection-start-column="17" selection-end-line="549" selection-end-column="17" />
+            <state relative-caret-position="460">
+              <caret line="378" column="19" lean-forward="true" selection-start-line="378" selection-start-column="19" selection-end-line="378" selection-end-column="19" />
               <folding>
                 <element signature="e#53#71#0" expanded="true" />
               </folding>
@@ -176,9 +176,9 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="4">
-    <option name="x" value="992" />
+    <option name="x" value="790" />
     <option name="y" value="24" />
-    <option name="width" value="928" />
+    <option name="width" value="1130" />
     <option name="height" value="1056" />
   </component>
   <component name="ProjectView">
@@ -246,15 +246,15 @@
       <workItem from="1527870449847" duration="598000" />
       <workItem from="1527926670067" duration="11493000" />
       <workItem from="1528028931662" duration="22234000" />
-      <workItem from="1528102917960" duration="9734000" />
+      <workItem from="1528102917960" duration="12577000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="129117000" />
+    <option name="totallyTimeSpent" value="131960000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="992" y="24" width="928" height="1056" extended-state="4" />
+    <frame x="790" y="24" width="1130" height="1056" extended-state="4" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2299613" sideWeight="0.42888403" order="1" side_tool="false" content_ui="combo" />
@@ -436,14 +436,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../common/lists.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="29" column="2" lean-forward="false" selection-start-line="29" selection-start-column="2" selection-end-line="29" selection-end-column="2" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../common/util.c">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="180">
@@ -470,10 +462,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/../common/lists.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="29" column="2" lean-forward="false" selection-start-line="29" selection-start-column="2" selection-end-line="29" selection-end-column="2" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="424">
-          <caret line="549" column="17" lean-forward="true" selection-start-line="549" selection-start-column="17" selection-end-line="549" selection-end-column="17" />
+        <state relative-caret-position="460">
+          <caret line="378" column="19" lean-forward="true" selection-start-line="378" selection-start-column="19" selection-end-line="378" selection-end-column="19" />
           <folding>
             <element signature="e#53#71#0" expanded="true" />
           </folding>

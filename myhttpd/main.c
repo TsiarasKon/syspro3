@@ -254,6 +254,7 @@ int command_handler(int cmdsock) {
         perror("Error reading from socket");
         return EC_SOCK;
     }
+    command[BUFSIZ - 1] = '\0';
     char *command_save;
     strtok_r(command, "\r\n", &command_save);            // remove trailing newline
     if (!strcmp(command, "STATS")) {

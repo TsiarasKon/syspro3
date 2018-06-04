@@ -375,6 +375,7 @@ int command_handler(int cmdsock) {
         close(cmdsock);
         return EC_SOCK;
     }
+    command[BUFSIZ - 1] = '\0';
     int rv = EC_OK;
     char *command_save;
     strtok_r(command, "\r\n", &command_save);            // remove trailing newline
@@ -466,6 +467,7 @@ int command_handler(int cmdsock) {
                 return EC_PIPE;
             }
         }
+        printf("Main thread: Responded to SEARCH command.\n");
     } else if (!strcmp(command, "SHUTDOWN")) {
         printf("Main thread: Received SHUTDOWN command ...\n");
         rv = -1;
@@ -534,8 +536,8 @@ void *crawler_thread(void *args) {
         char *msg_buf = malloc(1);
         msg_buf[0] = '\0';
         ssize_t bytes_read;
-        int content_pos = 0;
-        do {        // read at least the entire GET response, perhaps containing content
+        long content_pos = 0;
+        do {        // read at least the entire GET response, probably also containing content
             memset(&curr_buf[0], 0, sizeof(curr_buf));
             bytes_read = read(serversock, curr_buf, BUFSIZ);
             curr_buf[BUFSIZ - 1] = '\0';
@@ -558,24 +560,25 @@ void *crawler_thread(void *args) {
             continue;
         }
         long content_len = getContentLength(msg_buf);
-        char *content = malloc((size_t) content_len + 1);
+        char *content = malloc((size_t) content_len + BUFSIZ + 1);      // + BUFSIZ so that read() won't ever complain
         if (content == NULL) {
             perror("malloc in content");
             return (void *) EC_MEM;
         }
-        strcpy(content, msg_buf + content_pos + 1);
+        strcpy(content, msg_buf + content_pos);
+        strcat(content, "\0");
         free(msg_buf);
+        content_pos = strlen(content);
         do {        // read entire server response (which is now known to fit in "content")
-            memset(&curr_buf[0], 0, sizeof(curr_buf));
-            bytes_read = read(serversock, curr_buf, BUFSIZ);
-            curr_buf[BUFSIZ - 1] = '\0';
+            bytes_read = read(serversock, content + content_pos, BUFSIZ);
+            content_pos += bytes_read;
+            strcat(content, "\0");
             if (bytes_read < 0) {
                 perror("Error reading from socket");
                 return (void *) EC_SOCK;
-            } else if (bytes_read > 0) {
-                strcat(content, curr_buf);
             }
         } while (bytes_read > 0);
+//        printf("%s", content);
 
         char link_path[PATH_MAX] = "";
         if (link[0] == '/') {
