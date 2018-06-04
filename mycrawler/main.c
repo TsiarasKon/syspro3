@@ -19,7 +19,7 @@
 
 #define CMD_LISTEN_QUEUE_SIZE 5
 #define WORKERS_NUM 5
-#define DIRPERMS (S_IRWXU | S_IRWXG)        // default 0660
+#define DIRPERMS 0777
 
 // Needed global variables:
 char save_dir[PATH_MAX] = "";
@@ -478,6 +478,12 @@ int command_handler(int cmdsock) {
         rv = -1;
     } else {
         printf("Main thread: Unknown command \"%s\".\n", command);
+		char unknown_response[] = " Command unknown. Available commands (use without quotes):\n  \"STATS\"\n  \"SHUTDOWN\"\n  \"SEARCH word1 word2 ...\"\n";
+		if (write(cmdsock, unknown_response, strlen(unknown_response) + 1) < 0) {
+			perror("Error writing to socket");
+			close(cmdsock);
+			return EC_SOCK;
+		}
     }
     close(cmdsock);
     return rv;
@@ -571,7 +577,7 @@ void *crawler_thread(void *args) {
             perror("malloc in content");
             return (void *) EC_MEM;
         }
-        strcpy(content, msg_buf + content_pos);
+        strcpy(content, msg_buf + content_pos + 1);
         strcat(content, "\0");
         free(msg_buf);
         content_pos = strlen(content);

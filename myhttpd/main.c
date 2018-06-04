@@ -278,6 +278,12 @@ int command_handler(int cmdsock) {
         return -1;
     } else {
         printf("Main thread: Unknown command \"%s\".\n", command);
+		char unknown_response[] = " Command unknown. Available commands (use without quotes):\n  \"STATS\"\n  \"SHUTDOWN\"\n";
+		if (write(cmdsock, unknown_response, strlen(unknown_response) + 1) < 0) {
+			perror("Error writing to socket");
+			close(cmdsock);
+			return EC_SOCK;
+		}
     }
     close(cmdsock);
     return EC_OK;

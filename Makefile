@@ -17,7 +17,7 @@ CC		= gcc
 FLAGS   = -g3 -c -pedantic -std=c99 -Wall
 LIB 	= -lpthread
 
-.PHONY: all myhttpd mycrawler
+.PHONY: all myhttpd mycrawler jobExecutor
 
 all: myhttpd mycrawler
 
@@ -26,6 +26,9 @@ myhttpd:
 
 mycrawler:
 	cd $(CRAWLER) && $(MAKE)
+	
+jobExecutor:
+	cd $(JOBEX) && $(MAKE)
 
 
 clean:

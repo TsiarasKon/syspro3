@@ -1,11 +1,18 @@
 #!/bin/bash
-# Input checking:
+# Argument checking:
+if [ "$#" -ne 4 ]; then
+	echo "Invalid number of arguments."
+	echo "Please run \"$ ./webcreator.sh root_directory text_file w p\""
+	exit 1
+fi
 if [ ! -d "$1" ]; then
 	echo "root_directory \"$1\" does not exist."
+	echo "Please run \"$ ./webcreator.sh root_directory text_file w p\""
 	exit 1
 fi
 if [ ! -f "$2" ]; then
 	echo "text_file \"$2\" does not exist."
+	echo "Please run \"$ ./webcreator.sh root_directory text_file w p\""
 	exit 1
 fi
 if ! [[ $3 =~ ^([2-9]|[1-9][0-9]+)$ ]]; then		# regex for positive integer >1
